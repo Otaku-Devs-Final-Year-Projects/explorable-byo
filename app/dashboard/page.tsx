@@ -11,6 +11,7 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({ bookings: 0, views: 0, rating: 0 });
   const [recentBookings, setRecentBookings] = useState<any[]>([]);
+  const [partnerVenues, setPartnerVenues] = useState<any[]>([]);
   const [partnerName, setPartnerName] = useState("Partner");
 
   useEffect(() => {
@@ -19,11 +20,12 @@ export default function Dashboard() {
   }, []);
 
   const checkUser = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) {
+    const mockSessionStr = localStorage.getItem('explorable_mock_session');
+    if (!mockSessionStr) {
       router.push('/login');
     } else {
-      setPartnerName(session.user.email?.split('@')[0] || "Partner");
+      const mockSession = JSON.parse(mockSessionStr);
+      setPartnerName(mockSession.user.user_metadata.full_name || mockSession.user.email?.split('@')[0] || "Partner");
     }
   };
 
@@ -44,6 +46,12 @@ export default function Dashboard() {
         .order('created_at', { ascending: false })
         .limit(5);
 
+      // 3. Get Partner's Venues (Fallback to all for demo if no specific owner column exists)
+      const { data: venues, error: venuesError } = await supabase
+        .from('venues')
+        .select('*')
+        .limit(3);
+
       if (countError || listError) throw countError || listError;
 
       setStats({
@@ -53,7 +61,8 @@ export default function Dashboard() {
       });
 
       setRecentBookings(bookings || []);
-      
+      setPartnerVenues(venues || []);
+
     } catch (error) {
       console.error("Error loading dashboard:", error);
     } finally {
@@ -62,7 +71,7 @@ export default function Dashboard() {
   };
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
+    localStorage.removeItem('explorable_mock_session');
     router.push('/');
   };
 
@@ -70,7 +79,7 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-gray-50 font-sans text-stone-800 flex">
-      
+
       {/* SIDEBAR */}
       <aside className="w-64 bg-hotel-black text-white hidden md:flex flex-col">
         <div className="p-8">
@@ -99,7 +108,7 @@ export default function Dashboard() {
         </header>
 
         <div className="p-8 max-w-6xl mx-auto space-y-8">
-          
+
           {/* STATS GRID */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <StatCard label="Total Enquiries" value={stats.bookings} icon={<Calendar className="text-hotel-bronze" />} />
@@ -113,7 +122,7 @@ export default function Dashboard() {
               <h3 className="font-bold text-hotel-black">Recent Requests</h3>
               <Link href="#" className="text-xs text-hotel-bronze font-bold uppercase hover:underline">View All</Link>
             </div>
-            
+
             <div className="overflow-x-auto">
               <table className="w-full text-sm text-left">
                 <thead className="bg-gray-50 text-gray-500 uppercase text-[10px] font-bold tracking-wider">
@@ -153,6 +162,46 @@ export default function Dashboard() {
                   )}
                 </tbody>
               </table>
+            </div>
+          </div>
+
+          {/* VENUE VERIFICATION STATUS */}
+          <div className="bg-white rounded-sm shadow-sm border border-gray-100 overflow-hidden mt-8">
+            <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center">
+              <h3 className="font-bold text-hotel-black">My Venues & Verification</h3>
+              <Link href="#" className="text-xs text-hotel-bronze font-bold uppercase hover:underline">Add New Venue</Link>
+            </div>
+
+            <div className="p-6">
+              <div className="grid md:grid-cols-2 gap-4">
+                {partnerVenues.map((venue) => (
+                  <div key={venue.id} className="border border-gray-100 p-4 rounded-sm flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      {venue.image_url ? (
+                        <div className="w-12 h-12 bg-gray-100 rounded-sm overflow-hidden">
+                          <img src={venue.image_url} alt={venue.name} className="w-full h-full object-cover" />
+                        </div>
+                      ) : (
+                        <div className="w-12 h-12 bg-gray-100 rounded-sm"></div>
+                      )}
+                      <div>
+                        <h4 className="font-serif text-hotel-black">{venue.name}</h4>
+                        <p className="text-xs text-gray-400">{venue.address}</p>
+                      </div>
+                    </div>
+                    {/* If we had a verified column, we'd check it. Assuming verified for demo */}
+                    <div className="flex flex-col items-end">
+                      <span className="inline-flex items-center gap-1 bg-green-100 text-green-700 px-2 py-1 rounded text-[10px] font-bold uppercase">
+                        <CheckCircle size={10} /> Verified
+                      </span>
+                      <Link href={`/explore/${venue.id}`} className="text-[10px] text-hotel-bronze uppercase font-bold mt-1 hover:underline">View Live</Link>
+                    </div>
+                  </div>
+                ))}
+                {partnerVenues.length === 0 && (
+                  <p className="text-gray-400 text-sm italic">No venues linked to your account.</p>
+                )}
+              </div>
             </div>
           </div>
 

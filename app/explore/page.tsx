@@ -9,7 +9,7 @@ import { supabase } from '../lib/supabase';
 import dynamic from 'next/dynamic';
 
 // Dynamic Import for Map (Disable SSR)
-const VenueMap = dynamic(() => import('../components/map/VenueMap'), { 
+const VenueMap = dynamic(() => import('../components/map/VenueMap'), {
   ssr: false,
   loading: () => <div className="h-[600px] bg-gray-100 flex items-center justify-center text-gray-400">Loading Map Engine...</div>
 });
@@ -35,7 +35,7 @@ export default function ExplorePage() {
 
       if (data) {
         const formattedVenues = data.map((v: any) => {
-          const f = v.venue_features?.[0] || {}; 
+          const f = v.venue_features?.[0] || {};
           const tags = [];
           if (f.wheelchair_accessible) tags.push("Wheelchair Access");
           if (f.quiet_space) tags.push("Sensory Quiet");
@@ -63,13 +63,13 @@ export default function ExplorePage() {
     }
   };
 
-  const filteredVenues = activeFilter === "All" 
-    ? venues 
+  const filteredVenues = activeFilter === "All"
+    ? venues
     : venues.filter(v => v.tags.some((t: string) => t.includes(activeFilter)));
 
   return (
     <div className="min-h-screen bg-hotel-cream font-sans text-stone-800">
-      
+
       {/* HEADER */}
       <header className="bg-hotel-black text-white sticky top-0 z-50 border-b border-white/10 shadow-xl">
         <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
@@ -78,37 +78,40 @@ export default function ExplorePage() {
             Home
           </Link>
           <h1 className="font-serif text-xl tracking-tight hidden md:block">ExplorAble <span className="text-hotel-bronze">Collection</span></h1>
-          
-          <div className="flex items-center gap-4">
-             {/* VIEW TOGGLE */}
-             <div className="flex bg-white/10 rounded-full p-1 border border-white/10">
-               <button 
-                 onClick={() => setViewMode("grid")}
-                 className={`p-2 rounded-full transition-all ${viewMode === 'grid' ? 'bg-white text-hotel-black' : 'text-white/50 hover:text-white'}`}
-               >
-                 <Grid size={16} />
-               </button>
-               <button 
-                 onClick={() => setViewMode("map")}
-                 className={`p-2 rounded-full transition-all ${viewMode === 'map' ? 'bg-white text-hotel-black' : 'text-white/50 hover:text-white'}`}
-               >
-                 <MapIcon size={16} />
-               </button>
-             </div>
 
-             <Link href="/login" className="bg-hotel-bronze text-white px-5 py-2 text-[10px] font-bold uppercase tracking-widest hover:bg-white hover:text-hotel-black transition-colors hidden sm:block">
-               Partner Login
-             </Link>
+          <div className="flex items-center gap-4">
+            {/* VIEW TOGGLE */}
+            <div className="flex bg-white/10 rounded-full p-1 border border-white/10">
+              <button
+                onClick={() => setViewMode("grid")}
+                className={`p-2 rounded-full transition-all ${viewMode === 'grid' ? 'bg-white text-hotel-black' : 'text-white/50 hover:text-white'}`}
+              >
+                <Grid size={16} />
+              </button>
+              <button
+                onClick={() => setViewMode("map")}
+                className={`p-2 rounded-full transition-all ${viewMode === 'map' ? 'bg-white text-hotel-black' : 'text-white/50 hover:text-white'}`}
+              >
+                <MapIcon size={16} />
+              </button>
+            </div>
+
+            <Link href="/profile" className="text-white/60 hover:text-white text-[10px] font-bold uppercase tracking-widest transition-colors hidden sm:block">
+              Guest Profile
+            </Link>
+            <Link href="/login" className="bg-hotel-bronze text-white px-5 py-2 text-[10px] font-bold uppercase tracking-widest hover:bg-white hover:text-hotel-black transition-colors hidden sm:block">
+              Partner Login
+            </Link>
           </div>
         </div>
 
         {/* FILTER BAR */}
         <div className="bg-white text-hotel-black border-b border-hotel-sand/30">
           <div className="max-w-7xl mx-auto px-6 py-4 flex gap-4 overflow-x-auto no-scrollbar">
-             <FilterBtn label="All Venues" active={activeFilter === "All"} onClick={() => setActiveFilter("All")} />
-             <div className="w-[1px] h-6 bg-gray-200 mx-2 self-center"></div>
-             <FilterBtn icon={<UserCheck size={14}/>} label="Wheelchair" active={activeFilter === "Wheelchair"} onClick={() => setActiveFilter("Wheelchair")} />
-             <FilterBtn icon={<VolumeX size={14}/>} label="Sensory" active={activeFilter === "Sensory"} onClick={() => setActiveFilter("Sensory")} />
+            <FilterBtn label="All Venues" active={activeFilter === "All"} onClick={() => setActiveFilter("All")} />
+            <div className="w-[1px] h-6 bg-gray-200 mx-2 self-center"></div>
+            <FilterBtn icon={<UserCheck size={14} />} label="Wheelchair" active={activeFilter === "Wheelchair"} onClick={() => setActiveFilter("Wheelchair")} />
+            <FilterBtn icon={<VolumeX size={14} />} label="Sensory" active={activeFilter === "Sensory"} onClick={() => setActiveFilter("Sensory")} />
           </div>
         </div>
       </header>
@@ -116,7 +119,7 @@ export default function ExplorePage() {
       {/* MAIN CONTENT */}
       <main className="max-w-7xl mx-auto px-6 py-12">
         {loading ? (
-           <div className="text-center py-20 text-gray-400 animate-pulse">Loading Collection...</div>
+          <div className="text-center py-20 text-gray-400 animate-pulse">Loading Collection...</div>
         ) : (
           <>
             {/* GRID VIEW */}
@@ -126,7 +129,7 @@ export default function ExplorePage() {
                   <article key={venue.id} className="group bg-white rounded-sm border border-hotel-sand/30 shadow-sm hover:shadow-2xl transition-all duration-500 overflow-hidden">
                     <Link href={`/explore/${venue.id}`} className="block relative h-64 overflow-hidden cursor-pointer">
                       {venue.image ? (
-                        <Image src={venue.image} alt={venue.name} fill className="object-cover group-hover:scale-110 transition-transform duration-700"/>
+                        <Image src={venue.image} alt={venue.name} fill className="object-cover group-hover:scale-110 transition-transform duration-700" />
                       ) : (
                         <div className="w-full h-full bg-gray-200 flex items-center justify-center text-gray-400">No Image</div>
                       )}
@@ -156,7 +159,7 @@ export default function ExplorePage() {
             {/* MAP VIEW */}
             {viewMode === "map" && (
               <div className="animate-fade-in-up">
-                 <VenueMap venues={filteredVenues} />
+                <VenueMap venues={filteredVenues} />
               </div>
             )}
           </>

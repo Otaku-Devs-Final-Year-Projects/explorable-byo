@@ -10,7 +10,7 @@ import { supabase } from '../lib/supabase';
 export default function LoginPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
 
@@ -20,15 +20,17 @@ export default function LoginPage() {
     setError(null);
 
     try {
-      // 1. Attempt Real Login
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: email,
-        password: password,
-      });
+      // Bypass Supabase Auth for the showcase to avoid rate limits
+      const mockSession = {
+        user: {
+          email: `${username.toLowerCase().replace(/\s+/g, '')}@explorable.local`,
+          user_metadata: {
+            full_name: username
+          }
+        }
+      };
 
-      if (error) {
-        throw error;
-      }
+      localStorage.setItem('explorable_mock_session', JSON.stringify(mockSession));
 
       // 2. Success? Go to Dashboard
       router.push('/dashboard');
@@ -43,12 +45,12 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen w-full relative flex items-center justify-center overflow-hidden bg-hotel-black">
-      
+
       {/* Background Image */}
       <div className="absolute inset-0 z-0 opacity-40">
-        <img 
-          src="https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&q=80" 
-          className="w-full h-full object-cover" 
+        <img
+          src="https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&q=80"
+          className="w-full h-full object-cover"
           alt="Luxury Hotel Lobby"
         />
       </div>
@@ -56,7 +58,7 @@ export default function LoginPage() {
 
       {/* Glass Card */}
       <div className="relative z-10 w-full max-w-md bg-white/5 backdrop-blur-xl border border-white/10 p-8 rounded-sm shadow-2xl animate-fade-in-up">
-        
+
         <div className="mb-8 text-center">
           <Link href="/" className="inline-flex items-center gap-2 text-white/50 hover:text-white mb-6 text-xs uppercase tracking-widest transition-colors">
             <ArrowLeft size={14} /> Back to Home
@@ -66,7 +68,7 @@ export default function LoginPage() {
         </div>
 
         <form onSubmit={handleLogin} className="space-y-6">
-          
+
           {error && (
             <div className="bg-red-500/10 border border-red-500/20 text-red-400 text-xs p-3 text-center">
               {error}
@@ -74,14 +76,14 @@ export default function LoginPage() {
           )}
 
           <div className="space-y-2">
-            <label className="text-[10px] uppercase font-bold text-hotel-bronze tracking-widest">Email Address</label>
+            <label className="text-[10px] uppercase font-bold text-hotel-bronze tracking-widest">Username</label>
             <div className="relative group">
               <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-white/30 group-focus-within:text-hotel-bronze transition-colors" size={16} />
-              <input 
-                type="email" 
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="admin@venue.com"
+              <input
+                type="text"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                placeholder="admin123"
                 className="w-full bg-white/5 border border-white/10 text-white placeholder:text-white/20 pl-12 pr-4 py-4 focus:outline-none focus:border-hotel-bronze focus:bg-white/10 transition-all text-sm"
                 required
               />
@@ -92,8 +94,8 @@ export default function LoginPage() {
             <label className="text-[10px] uppercase font-bold text-hotel-bronze tracking-widest">Password</label>
             <div className="relative group">
               <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-white/30 group-focus-within:text-hotel-bronze transition-colors" size={16} />
-              <input 
-                type="password" 
+              <input
+                type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
@@ -103,8 +105,8 @@ export default function LoginPage() {
             </div>
           </div>
 
-          <button 
-            type="submit" 
+          <button
+            type="submit"
             disabled={loading}
             className="w-full bg-hotel-bronze hover:bg-white hover:text-hotel-black text-white font-bold uppercase tracking-[0.2em] text-xs py-4 transition-all duration-300 flex items-center justify-center gap-2"
           >
@@ -112,9 +114,9 @@ export default function LoginPage() {
           </button>
 
         </form>
-        
+
         <div className="mt-8 text-center">
-           <p className="text-white/20 text-xs">Protected by ExplorAble Secure Gate</p>
+          <p className="text-white/20 text-xs">Protected by ExplorAble Secure Gate</p>
         </div>
 
       </div>
