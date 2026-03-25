@@ -3,15 +3,16 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, Lock, Mail, User, Loader2 } from 'lucide-react';
+import { ArrowLeft, Lock, Mail, User, Loader2, Building } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
 export default function SignupPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
-  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
+  const [role, setRole] = useState("guest");
   const [error, setError] = useState<string | null>(null);
 
   const handleSignup = async (e: React.FormEvent) => {
@@ -20,21 +21,20 @@ export default function SignupPage() {
     setError(null);
 
     try {
-      // Bypassing Supabase Auth completely to avoid Email Rate Limits for the showcase
-      // We will simulate a logged in user by storing their "session" in localStorage
-      const mockSession = {
-        user: {
-          email: `${username.toLowerCase().replace(/\s+/g, '')}@explorable.local`,
-          user_metadata: {
-            full_name: fullName || username
+      const { data, error: signUpError } = await supabase.auth.signUp({
+        email: email.trim(),
+        password: password,
+        options: {
+          data: {
+            full_name: fullName,
+            role: role
           }
         }
-      };
+      });
 
-      localStorage.setItem('explorable_mock_session', JSON.stringify(mockSession));
+      if (signUpError) throw signUpError;
 
-      // Success? Go to Profile
-      router.push('/profile');
+      router.push('/dashboard');
     } catch (err: any) {
       console.error("Signup failed:", err);
       setError(err.message || "Failed to create account");
@@ -44,19 +44,19 @@ export default function SignupPage() {
   };
 
   return (
-    <div className="min-h-screen w-full relative flex items-center justify-center overflow-hidden bg-hotel-cream">
+    <div className="min-h-screen w-full relative flex items-center justify-center overflow-hidden bg-hotel-cream py-12">
 
       {/* Background Pattern */}
       <div className="absolute inset-0 z-0 opacity-10 bg-[url('https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&q=80')] bg-cover"></div>
 
-      <div className="relative z-10 w-full max-w-md bg-white border border-hotel-sand/50 p-8 rounded-sm shadow-2xl animate-fade-in-up">
+      <div className="relative z-10 w-full max-w-md bg-white border border-hotel-sand/50 p-8 rounded-sm shadow-2xl animate-fade-in-up mt-8 md:mt-0">
 
         <div className="mb-8 text-center">
           <Link href="/" className="inline-flex items-center gap-2 text-gray-400 hover:text-hotel-black mb-6 text-xs uppercase tracking-widest transition-colors">
             <ArrowLeft size={14} /> Back to Home
           </Link>
-          <h1 className="font-serif text-3xl text-hotel-black mb-2">Guest Account</h1>
-          <p className="text-gray-500 text-sm">Create an account to save favorite accessible venues.</p>
+          <h1 className="font-serif text-3xl text-hotel-black mb-2">Join ExplorAble</h1>
+          <p className="text-gray-500 text-sm">Create an account to explore or list venues.</p>
         </div>
 
         <form onSubmit={handleSignup} className="space-y-6">
@@ -66,6 +66,25 @@ export default function SignupPage() {
               {error}
             </div>
           )}
+
+          <div className="grid grid-cols-2 gap-4 mb-2">
+            <button
+              type="button"
+              onClick={() => setRole('guest')}
+              className={`p-4 border rounded-sm flex flex-col items-center justify-center gap-2 transition-colors ${role === 'guest' ? 'border-hotel-bronze bg-hotel-bronze/10 text-hotel-bronze' : 'border-gray-200 text-gray-400 hover:border-hotel-bronze/50'}`}
+            >
+              <User size={20} />
+              <span className="text-[10px] uppercase font-bold tracking-widest">I am a Guest</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setRole('partner')}
+              className={`p-4 border rounded-sm flex flex-col items-center justify-center gap-2 transition-colors ${role === 'partner' ? 'border-hotel-black bg-hotel-black text-white' : 'border-gray-200 text-gray-400 hover:border-hotel-black/50'}`}
+            >
+              <Building size={20} />
+              <span className="text-[10px] uppercase font-bold tracking-widest">I am a Partner</span>
+            </button>
+          </div>
 
           <div className="space-y-2">
             <label className="text-[10px] uppercase font-bold text-hotel-bronze tracking-widest">Full Name</label>
@@ -83,14 +102,14 @@ export default function SignupPage() {
           </div>
 
           <div className="space-y-2">
-            <label className="text-[10px] uppercase font-bold text-hotel-bronze tracking-widest">Username</label>
+            <label className="text-[10px] uppercase font-bold text-hotel-bronze tracking-widest">Email Address</label>
             <div className="relative group">
-              <User className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-hotel-bronze transition-colors" size={16} />
+              <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-hotel-bronze transition-colors" size={16} />
               <input
-                type="text"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                placeholder="guest123"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="you@example.com"
                 className="w-full bg-gray-50 border border-gray-200 text-hotel-black placeholder:text-gray-400 pl-12 pr-4 py-4 focus:outline-none focus:border-hotel-bronze transition-all text-sm rounded-sm"
                 required
               />

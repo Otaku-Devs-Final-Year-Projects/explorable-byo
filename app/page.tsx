@@ -1,147 +1,16 @@
 ﻿"use client";
 
 import Link from 'next/link';
-import { MapPin, ArrowRight, Star, Coffee, Wifi, ShieldCheck, ChevronDown, Mic, MicOff, Activity, Terminal, Map, UserPlus, Check, ChevronRight } from 'lucide-react';
+import { MapPin, ArrowRight, Star, Coffee, Wifi, ShieldCheck, ChevronDown, Activity, Map, UserPlus, ChevronRight } from 'lucide-react';
 import Image from 'next/image';
-import { useEffect, useState, useRef } from 'react';
-import { useRouter } from 'next/navigation';
 
 export default function LandingPage() {
-  const router = useRouter();
-
-  // UI State
-  const [isListening, setIsListening] = useState(false);
-  const [transcriptDisplay, setTranscriptDisplay] = useState("Click mic to start");
-  const [commandTriggered, setCommandTriggered] = useState("");
-
-  const recognitionRef = useRef<any>(null);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-
-    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    if (!SpeechRecognition) return;
-
-    const recognition = new SpeechRecognition();
-    recognition.continuous = true;
-    recognition.interimResults = true;
-    recognition.lang = 'en-US';
-
-    recognition.onstart = () => {
-      setIsListening(true);
-      setTranscriptDisplay("Listening...");
-    };
-
-    recognition.onend = () => {
-      // If it stops (even from error), we just update UI. 
-      // We do not auto-restart to avoid loops.
-      setIsListening(false);
-      setTranscriptDisplay("Click mic to start");
-    };
-
-    recognition.onresult = (event: any) => {
-      const result = event.results[event.results.length - 1];
-      const text = result[0].transcript.toLowerCase().trim();
-
-      setTranscriptDisplay(text);
-
-      if (result.isFinal) {
-        processCommand(text);
-      }
-    };
-
-    recognitionRef.current = recognition;
-
-    return () => {
-      if (recognitionRef.current) recognitionRef.current.stop();
-    };
-  }, [router]);
-
-  // --- COMMAND LOGIC ---
-  const processCommand = (text: string) => {
-    if (text.includes('scroll') && text.includes('down')) {
-      triggerVisual('Scrolling Down');
-      window.scrollBy({ top: 600, behavior: 'smooth' });
-    }
-    else if (text.includes('scroll') && text.includes('up')) {
-      triggerVisual('Scrolling Up');
-      window.scrollBy({ top: -600, behavior: 'smooth' });
-    }
-    else if (text.includes('explore') || text.includes('venues')) {
-      triggerVisual('Opening Explore');
-      router.push('/explore');
-    }
-    else if (text.includes('login') || text.includes('partner')) {
-      triggerVisual('Opening Login');
-      router.push('/login');
-    }
-  };
-
-  const triggerVisual = (msg: string) => {
-    setCommandTriggered(msg);
-    setTimeout(() => setCommandTriggered(""), 2500);
-  };
-
-  const toggleListening = () => {
-    if (!recognitionRef.current) return;
-
-    if (isListening) {
-      recognitionRef.current.stop();
-    } else {
-      try {
-        recognitionRef.current.start();
-      } catch (e) {
-        console.error(e);
-      }
-    }
-  };
-
-  // --- MANUAL SIMULATION (The "Peace of Mind" Fix) ---
-  const simulateScroll = () => {
-    // This allows you to demo the feature even if the mic fails
-    toggleListening(); // Turn on mic for effect
-    setTimeout(() => {
-      setTranscriptDisplay("Simulated: scroll down");
-      processCommand("scroll down");
-    }, 500);
-  };
-
   return (
-    <div className="min-h-screen bg-hotel-cream selection:bg-hotel-bronze selection:text-white font-sans">
-
-      {/* FLASH FEEDBACK */}
-      <div className={`fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-[60] pointer-events-none transition-all duration-300 ${commandTriggered ? 'opacity-100 scale-100' : 'opacity-0 scale-90'}`}>
-        <div className="bg-hotel-bronze text-white px-10 py-6 rounded-sm shadow-2xl border border-white/20 flex flex-col items-center gap-3">
-          <Activity size={32} className="animate-pulse" />
-          <div className="text-xl font-serif font-bold uppercase tracking-widest">{commandTriggered}</div>
-        </div>
-      </div>
-
-      {/* MIC TOGGLE (Bottom Right) */}
-      <button
-        onClick={toggleListening}
-        className={`fixed bottom-6 right-6 z-50 transition-all duration-300 hover:scale-105 border border-white/10 text-white px-5 py-3 rounded-full flex items-center gap-4 shadow-2xl cursor-pointer
-          ${isListening ? 'bg-hotel-black/90' : 'bg-gray-800/90'}`}
-      >
-        <div className="relative">
-          <div className={`w-3 h-3 rounded-full ${isListening ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`}></div>
-        </div>
-        <div className="flex flex-col items-start w-32">
-          <span className="text-[9px] uppercase tracking-widest text-gray-400 font-bold mb-1">
-            {isListening ? "Voice Active" : "Voice Off"}
-          </span>
-          <div className="h-4 overflow-hidden w-full relative">
-            <span className={`text-xs font-serif whitespace-nowrap absolute ${isListening ? 'text-hotel-bronze' : 'text-gray-500'}`}>
-              {transcriptDisplay}
-            </span>
-          </div>
-        </div>
-        {isListening ? <Activity size={18} className="text-hotel-bronze" /> : <MicOff size={18} className="text-gray-500" />}
-      </button>
+    <div className="min-h-screen bg-hotel-cream selection:bg-hotel-bronze selection:text-white font-sans pt-0">
 
       <main>
         {/* HERO SECTION */}
-        <section className="relative h-screen w-full overflow-hidden flex flex-col items-center justify-center pb-32">
+        <section className="relative min-h-screen w-full overflow-hidden flex flex-col items-center justify-center pb-32 pt-20 md:pt-24">
 
           <div className="absolute inset-0 animate-slow-pan">
             <Image src="https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&q=80" alt="Luxury Accessible Hotel Room" fill className="object-cover" priority />
@@ -180,16 +49,6 @@ export default function LandingPage() {
               >
                 Explore Collection
               </Link>
-
-              {/* THE "SAFETY NET" BUTTON */}
-              <button
-                onClick={simulateScroll}
-                className="group flex items-center gap-3 bg-white/10 backdrop-blur-md border border-white/20 text-white font-serif uppercase tracking-[0.2em] text-xs px-8 py-5 hover:bg-white hover:text-hotel-black transition-all cursor-pointer"
-                title="Click to simulate voice command if mic fails"
-              >
-                <Mic size={16} className={isListening ? "text-green-400 animate-pulse" : "text-white"} />
-                <span>Try: "Scroll Down"</span>
-              </button>
             </div>
           </div>
 
@@ -343,15 +202,24 @@ export default function LandingPage() {
 
         {/* FOOTER */}
         <footer className="bg-hotel-black text-white pt-24 pb-12 px-6">
-          <div className="max-w-7xl mx-auto grid md:grid-cols-3 gap-16 mb-20 text-center md:text-left">
-            <div>
+          <div className="max-w-7xl mx-auto grid md:grid-cols-4 gap-12 mb-20 text-center md:text-left">
+            <div className="md:col-span-2">
               <h4 className="font-serif text-3xl mb-8 tracking-tight">ExplorAble <span className="text-hotel-bronze">.</span></h4>
               <p className="text-gray-400 leading-relaxed font-light">
                 742 Evergreen Terrace <br /> Bulawayo, Zimbabwe
               </p>
             </div>
+            <div className="flex flex-col gap-4">
+              <h4 className="font-serif text-xl mb-4 text-hotel-bronze">Community</h4>
+              <nav className="flex flex-col gap-3 text-sm text-gray-400 font-light">
+                <Link href="/innovation" className="hover:text-hotel-bronze transition-colors">Innovation & Tools</Link>
+                <Link href="/training" className="hover:text-hotel-bronze transition-colors">Training Academy</Link>
+                <Link href="/community" className="hover:text-hotel-bronze transition-colors">Community Forum</Link>
+                <Link href="/news" className="hover:text-hotel-bronze transition-colors">News & Updates</Link>
+              </nav>
+            </div>
             <div className="flex flex-col gap-5">
-              <h4 className="font-serif text-xl mb-4 text-hotel-bronze">Legal & Access</h4>
+              <h4 className="font-serif text-xl mb-4 text-hotel-bronze">Accounts</h4>
               <div className="flex flex-col gap-2">
                 <Link href="/signup" className="inline-block text-white border border-white/20 py-3 px-6 hover:bg-hotel-bronze hover:border-hotel-bronze transition-colors text-center mt-2 uppercase tracking-widest text-xs">Guest Sign Up</Link>
                 <Link href="/login" className="inline-block text-white border border-white/20 py-3 px-6 hover:bg-white hover:text-black transition-colors text-center uppercase tracking-widest text-xs">Partner Login</Link>

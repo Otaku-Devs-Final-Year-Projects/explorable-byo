@@ -1,16 +1,15 @@
-﻿"use client";
+"use client";
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft, Lock, Mail, Loader2 } from 'lucide-react';
-// FIX: Path is one level up
 import { supabase } from '../lib/supabase';
 
 export default function LoginPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
-  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
 
@@ -20,24 +19,17 @@ export default function LoginPage() {
     setError(null);
 
     try {
-      // Bypass Supabase Auth for the showcase to avoid rate limits
-      const mockSession = {
-        user: {
-          email: `${username.toLowerCase().replace(/\s+/g, '')}@explorable.local`,
-          user_metadata: {
-            full_name: username
-          }
-        }
-      };
+      const { data, error: signInError } = await supabase.auth.signInWithPassword({
+        email: email.trim(),
+        password: password,
+      });
 
-      localStorage.setItem('explorable_mock_session', JSON.stringify(mockSession));
+      if (signInError) throw signInError;
 
-      // 2. Success? Go to Dashboard
       router.push('/dashboard');
-
     } catch (err: any) {
       console.error("Login failed:", err);
-      setError(err.message || "Invalid credentials");
+      setError(err.message || "Invalid credentials. Please double check your email and password.");
     } finally {
       setLoading(false);
     }
@@ -63,8 +55,8 @@ export default function LoginPage() {
           <Link href="/" className="inline-flex items-center gap-2 text-white/50 hover:text-white mb-6 text-xs uppercase tracking-widest transition-colors">
             <ArrowLeft size={14} /> Back to Home
           </Link>
-          <h1 className="font-serif text-3xl text-white mb-2">Partner Access</h1>
-          <p className="text-white/40 text-sm">Manage your venue profile and bookings</p>
+          <h1 className="font-serif text-3xl text-white mb-2">Welcome Back</h1>
+          <p className="text-white/40 text-sm">Log in to manage your venues or track requests</p>
         </div>
 
         <form onSubmit={handleLogin} className="space-y-6">
@@ -76,14 +68,14 @@ export default function LoginPage() {
           )}
 
           <div className="space-y-2">
-            <label className="text-[10px] uppercase font-bold text-hotel-bronze tracking-widest">Username</label>
+            <label className="text-[10px] uppercase font-bold text-hotel-bronze tracking-widest">Email Address</label>
             <div className="relative group">
               <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-white/30 group-focus-within:text-hotel-bronze transition-colors" size={16} />
               <input
-                type="text"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                placeholder="admin123"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="you@example.com"
                 className="w-full bg-white/5 border border-white/10 text-white placeholder:text-white/20 pl-12 pr-4 py-4 focus:outline-none focus:border-hotel-bronze focus:bg-white/10 transition-all text-sm"
                 required
               />
@@ -115,8 +107,10 @@ export default function LoginPage() {
 
         </form>
 
-        <div className="mt-8 text-center">
-          <p className="text-white/20 text-xs">Protected by ExplorAble Secure Gate</p>
+        <div className="mt-8 text-center border-t border-white/10 pt-6">
+          <p className="text-white/40 text-xs">
+            Don't have an account? <Link href="/signup" className="text-hotel-bronze font-bold hover:underline">Sign Up</Link>
+          </p>
         </div>
 
       </div>
