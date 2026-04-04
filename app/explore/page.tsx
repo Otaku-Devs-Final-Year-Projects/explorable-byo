@@ -40,7 +40,8 @@ export default function ExplorePage() {
  setLoading(true);
  const { data, error } = await supabase
  .from('venues')
- .select(`*, venue_features (*)`);
+ .select(`*, venue_features (*)`)
+ .ilike('address', '%Bulawayo%');
 
  if (error) throw error;
 

@@ -101,7 +101,7 @@ export default function PartnerDashboardView({ user, profile, onLogout }: { user
     return (
         <div className="flex flex-col md:flex-row min-h-[calc(100vh-5rem)] bg-gray-50 w-full">
             {/* SIDEBAR */}
-            <aside className="w-full md:w-64 bg-hotel-black text-white flex md:flex-col overflow-y-auto flex-shrink-0 z-20 sticky top-0 h-[calc(100vh-5rem)] border-r border-white/10">
+            <aside className="w-full md:w-64 bg-hotel-black text-white flex md:flex-col overflow-y-auto flex-shrink-0 z-20 md:sticky md:top-0 h-auto md:h-[calc(100vh-5rem)] border-r border-white/10">
                 <div className="p-4 md:p-8 hidden md:block border-b border-white/10 mb-4">
                     <div className="w-12 h-12 bg-hotel-bronze text-white rounded-full flex items-center justify-center font-serif text-2xl mb-4">
                         {partnerName.charAt(0).toUpperCase()}
