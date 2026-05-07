@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { supabase } from '../../lib/supabase';
 import Link from 'next/link';
 import { ArrowLeft, Download, Award, Check } from 'lucide-react';
+import LoginGate from '../../components/ui/LoginGate';
 
 const TOTAL_MODULES = 3;
 
@@ -12,6 +13,7 @@ export default function CertificatePage() {
     const router = useRouter();
     const printRef = useRef<HTMLDivElement>(null);
     const [loading, setLoading] = useState(true);
+    const [notLoggedIn, setNotLoggedIn] = useState(false);
     const [eligible, setEligible] = useState(false);
     const [userName, setUserName] = useState('');
     const [issueDate, setIssueDate] = useState('');
@@ -19,7 +21,7 @@ export default function CertificatePage() {
     useEffect(() => {
         const init = async () => {
             const { data: { session } } = await supabase.auth.getSession();
-            if (!session?.user) { router.push('/login'); return; }
+            if (!session?.user) { setNotLoggedIn(true); setLoading(false); return; }
 
             const name = session.user.user_metadata?.full_name || session.user.email?.split('@')[0] || 'Participant';
             setUserName(name);
@@ -46,6 +48,13 @@ export default function CertificatePage() {
     const handlePrint = () => {
         window.print();
     };
+
+    if (notLoggedIn) return (
+        <LoginGate
+            message="Please log in to access your training certificate."
+            subMessage="Complete all 3 modules to earn your certificate."
+        />
+    );
 
     if (loading) return (
         <div className="min-h-screen bg-hotel-cream flex items-center justify-center text-hotel-bronze font-serif text-xl">

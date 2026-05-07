@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { supabase } from '../../../lib/supabase';
 import Link from 'next/link';
 import { ArrowLeft, Upload, Save, Loader2, Check, AlertCircle } from 'lucide-react';
+import LoginGate from '../../../components/ui/LoginGate';
 
 export default function EditVenuePage() {
     const params = useParams();
@@ -13,6 +14,7 @@ export default function EditVenuePage() {
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const [loading, setLoading] = useState(true);
+    const [notLoggedIn, setNotLoggedIn] = useState(false);
     const [saving, setSaving] = useState(false);
     const [uploadingImage, setUploadingImage] = useState(false);
     const [saveStatus, setSaveStatus] = useState<'idle' | 'success' | 'error'>('idle');
@@ -51,7 +53,7 @@ export default function EditVenuePage() {
         try {
             // Auth guard — must be owner
             const { data: { session } } = await supabase.auth.getSession();
-            if (!session?.user) { router.push('/login'); return; }
+            if (!session?.user) { setNotLoggedIn(true); setLoading(false); return; }
 
             const { data, error } = await supabase
                 .from('venues')
@@ -171,6 +173,13 @@ export default function EditVenuePage() {
             setSaving(false);
         }
     };
+
+    if (notLoggedIn) return (
+        <LoginGate
+            message="Please log in to edit your venue listing."
+            subMessage="Only the venue owner can access this page."
+        />
+    );
 
     if (loading) return (
         <div className="min-h-screen bg-hotel-cream flex items-center justify-center text-hotel-bronze font-serif text-xl">

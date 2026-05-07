@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { supabase } from '../../lib/supabase';
 import Link from 'next/link';
 import { ArrowLeft, CheckCircle2, Lock, ChevronRight, Award, Loader2 } from 'lucide-react';
+import LoginGate from '../../components/ui/LoginGate';
 
 // Inline static content for the 3 modules
 const MODULE_CONTENT: Record<string, { title: string; duration: string; content: string[]; image: string }> = {
@@ -54,6 +55,7 @@ export default function TrainingModulePage() {
     const moduleId = params.id as string;
 
     const [loading, setLoading] = useState(true);
+    const [notLoggedIn, setNotLoggedIn] = useState(false);
     const [currentUser, setCurrentUser] = useState<any>(null);
     const [userProgress, setUserProgress] = useState<Record<string, string>>({});
     const [completing, setCompleting] = useState(false);
@@ -64,7 +66,7 @@ export default function TrainingModulePage() {
     useEffect(() => {
         const init = async () => {
             const { data: { session } } = await supabase.auth.getSession();
-            if (!session?.user) { router.push('/login'); return; }
+            if (!session?.user) { setNotLoggedIn(true); setLoading(false); return; }
             setCurrentUser(session.user);
 
             // Fetch all progress for this user
@@ -114,6 +116,13 @@ export default function TrainingModulePage() {
 
     const nextModuleId = String(moduleIndex + 1);
     const hasNext = !!MODULE_CONTENT[nextModuleId];
+
+    if (notLoggedIn) return (
+        <LoginGate
+            message="Please log in to access the Training Academy."
+            subMessage="Track your progress, complete modules, and earn your certificate."
+        />
+    );
 
     if (loading) return (
         <div className="min-h-screen bg-hotel-cream flex items-center justify-center text-hotel-bronze font-serif text-xl">
