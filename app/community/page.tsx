@@ -304,9 +304,10 @@ export default function CommunityPage() {
 								</div>
 
 								{/* Post Content */}
-                <Link href={`/community/${post.id}`}>
-                  <h3 className="font-serif text-xl mb-3 hover:text-hotel-bronze transition-colors cursor-pointer">{post.title}</h3>
-                </Link>
+								<Link href={`/community/${post.id}`}>
+									<h3 className="font-serif text-xl mb-3 hover:text-hotel-bronze transition-colors cursor-pointer">{post.title}</h3>
+								</Link>
+								<p className="text-gray-600 text-sm font-light leading-relaxed line-clamp-3 mb-4">
 									{post.content}
 								</p>
 
