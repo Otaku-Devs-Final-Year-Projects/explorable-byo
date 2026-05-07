@@ -7,12 +7,11 @@ import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 
 export default function TrainingPortal() {
- const mockModules = [
+ const staticModules = [
  {
  id: '1',
  title:"Module 1: Foundations of Awareness",
  duration:"45 mins",
- status:"completed",
  description:"Understanding different types of disabilities and basic etiquette in hospitality.",
  image:"https://images.unsplash.com/photo-1573164713619-24c711fe7878?auto=format&fit=crop&q=80"
  },
@@ -20,7 +19,6 @@ export default function TrainingPortal() {
  id: '2',
  title:"Module 2: Communicating with Care",
  duration:"60 mins",
- status:"in-progress",
  description:"Best practices for respectful and effective communication with diverse guests.",
  image:"https://images.unsplash.com/photo-1517486808906-6ca8b3f04846?auto=format&fit=crop&q=80"
  },
@@ -28,43 +26,46 @@ export default function TrainingPortal() {
  id: '3',
  title:"Module 3: Assisting with Mobility",
  duration:"45 mins",
- status:"locked",
  description:"Practical scenarios: guiding, using equipment safely, and spatial awareness.",
  image:"https://images.unsplash.com/photo-1587370560942-1e5b121fb65a?auto=format&fit=crop&q=80"
  }
  ];
 
- const [modules, setModules] = useState(mockModules);
  const [loading, setLoading] = useState(true);
+ const [userProgress, setUserProgress] = useState<Record<string, string>>({});
+ const [currentUser, setCurrentUser] = useState<any>(null);
 
  useEffect(() => {
- const fetchModules = async () => {
- try {
- const { data, error } = await supabase
- .from('training_modules')
- .select('*')
- .order('order_index', { ascending: true });
+   const init = async () => {
+     const { data: { session } } = await supabase.auth.getSession();
+     setCurrentUser(session?.user || null);
 
- if (error) throw error;
- if (data && data.length > 0) {
- setModules(data.map((d, index) => ({
- id: d.id,
- title: d.title,
- duration: d.duration,
- // Simulate progress state based on index for the demo
- status: index === 0 ?"completed" : index === 1 ?"in-progress" :"locked",
- description: d.description,
- image: d.image_url
- })));
- }
- } catch (err) {
- console.log("Using mock data for training modules:", err);
- } finally {
- setLoading(false);
- }
- };
- fetchModules();
+     if (session?.user) {
+       const { data } = await supabase
+         .from('user_training_progress')
+         .select('module_id, status')
+         .eq('user_id', session.user.id);
+       const map: Record<string, string> = {};
+       (data || []).forEach((p: any) => { map[p.module_id] = p.status; });
+       setUserProgress(map);
+     }
+     setLoading(false);
+   };
+   init();
  }, []);
+
+ const getStatus = (id: string) => {
+   if (userProgress[id] === 'completed') return 'completed';
+   const idx = parseInt(id);
+   if (idx === 1) return 'in-progress';
+   if (userProgress[String(idx - 1)] === 'completed') return 'in-progress';
+   return 'locked';
+ };
+
+ const completedCount = Object.values(userProgress).filter(v => v === 'completed').length;
+ const totalModules = staticModules.length;
+ const progressPct = Math.round((completedCount / totalModules) * 100);
+ const allComplete = completedCount === totalModules;
 
  if (loading) return <div className="min-h-screen bg-hotel-cream flex items-center justify-center text-hotel-bronze">Loading Training...</div>;
 
@@ -105,9 +106,20 @@ export default function TrainingPortal() {
  <h2 className="font-serif text-3xl mb-3">Earn the ExplorAble Certificate</h2>
  <p className="text-gray-500 font-light mb-6">Complete all modules and pass the final assessment to earn a verifiable digital badge for your establishment.</p>
  <div className="w-full bg-hotel-sand h-2 rounded-full overflow-hidden">
- <div className="bg-hotel-bronze w-1/3 h-full"></div>
+ <div className="bg-hotel-bronze h-full transition-all duration-700" style={{ width: `${progressPct}%` }}></div>
  </div>
- <p className="text-xs text-hotel-bronze uppercase tracking-widest font-bold mt-3 text-right">33% Completed</p>
+ <div className="flex justify-between items-center mt-3">
+   <p className="text-xs text-gray-400 uppercase tracking-widest font-bold">{completedCount} of {totalModules} Modules Complete</p>
+   <p className="text-xs text-hotel-bronze uppercase tracking-widest font-bold">{progressPct}%</p>
+ </div>
+ {allComplete && (
+   <Link href="/training/certificate" className="mt-4 inline-block bg-hotel-bronze text-white px-6 py-3 text-xs uppercase tracking-widest font-bold hover:bg-hotel-black transition-colors rounded-sm">
+     View Certificate →
+   </Link>
+ )}
+ {!currentUser && (
+   <p className="mt-4 text-xs text-gray-400"><Link href="/login" className="text-hotel-bronze font-bold hover:underline">Log in</Link> to track your progress.</p>
+ )}
  </div>
  </div>
 
@@ -119,13 +131,15 @@ export default function TrainingPortal() {
  </h2>
 
  <div className="space-y-6">
- {modules.map((module) => (
- <div key={module.id} className={`flex flex-col md:flex-row bg-white border ${module.status === 'in-progress' ? 'border-hotel-bronze shadow-lg' : 'border-hotel-sand shadow-sm'} transition-all duration-300`}>
+ {staticModules.map((module) => {
+   const status = getStatus(module.id);
+   return (
+ <div key={module.id} className={`flex flex-col md:flex-row bg-white border ${status === 'in-progress' ? 'border-hotel-bronze shadow-lg' : 'border-hotel-sand shadow-sm'} transition-all duration-300`}>
 
  {/* Image Area */}
  <div className="w-full md:w-64 h-48 md:h-auto relative">
- <Image src={module.image} alt={module.title} fill className={`object-cover ${module.status === 'locked' ? 'grayscale opacity-50' : ''}`} />
- {module.status === 'completed' && (
+ <Image src={module.image} alt={module.title} fill className={`object-cover ${status === 'locked' ? 'grayscale opacity-50' : ''}`} />
+ {status === 'completed' && (
  <div className="absolute inset-0 bg-hotel-black/40 flex items-center justify-center">
  <CheckCircle2 size={48} className="text-white" />
  </div>
@@ -136,39 +150,40 @@ export default function TrainingPortal() {
  <div className="flex-1 p-8 flex flex-col justify-between">
  <div>
  <div className="flex justify-between items-start mb-2">
- <h3 className={`font-serif text-2xl ${module.status === 'locked' ? 'text-gray-400' : 'text-hotel-black'}`}>
+ <h3 className={`font-serif text-2xl ${status === 'locked' ? 'text-gray-400' : 'text-hotel-black'}`}>
  {module.title}
  </h3>
  <span className="text-xs uppercase tracking-widest text-hotel-bronze font-bold bg-hotel-cream px-3 py-1 rounded-sm">
  {module.duration}
  </span>
  </div>
- <p className={`font-light mb-6 ${module.status === 'locked' ? 'text-gray-300' : 'text-gray-500'}`}>
+ <p className={`font-light mb-6 ${status === 'locked' ? 'text-gray-300' : 'text-gray-500'}`}>
  {module.description}
  </p>
  </div>
 
  {/* Action Button */}
  <div>
- {module.status === 'completed' && (
- <button className="flex items-center text-xs uppercase tracking-widest text-gray-400 font-bold hover:text-hotel-black transition-colors">
- Review Material <ChevronRight size={14} className="ml-1" />
- </button>
+ {status === 'completed' && (
+ <Link href={`/training/${module.id}`} className="flex items-center text-xs uppercase tracking-widest text-gray-400 font-bold hover:text-hotel-black transition-colors">
+   Review Material <ChevronRight size={14} className="ml-1" />
+ </Link>
  )}
- {module.status === 'in-progress' && (
- <button className="flex items-center bg-hotel-black text-white px-6 py-3 text-xs uppercase tracking-widest font-bold hover:bg-hotel-bronze transition-colors">
- <PlayCircle size={16} className="mr-2" /> Continue Course
- </button>
+ {status === 'in-progress' && (
+ <Link href={`/training/${module.id}`} className="inline-flex items-center bg-hotel-black text-white px-6 py-3 text-xs uppercase tracking-widest font-bold hover:bg-hotel-bronze transition-colors">
+ <PlayCircle size={16} className="mr-2" /> {completedCount === 0 && module.id === '1' ? 'Start Course' : 'Continue Course'}
+ </Link>
  )}
- {module.status === 'locked' && (
+ {status === 'locked' && (
  <div className="flex items-center text-xs uppercase tracking-widest text-gray-300 font-bold">
- <Lock size={14} className="mr-2" /> Locked (Complete previous modules)
+ <Lock size={14} className="mr-2" /> Locked — Complete previous module first
  </div>
  )}
  </div>
  </div>
  </div>
- ))}
+   );
+ })}
  </div>
  </div>
 

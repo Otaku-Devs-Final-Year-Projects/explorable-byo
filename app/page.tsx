@@ -13,7 +13,21 @@ export default function LandingPage() {
         <section className="relative min-h-screen w-full overflow-hidden flex flex-col items-center justify-center pb-32 pt-20 md:pt-24">
 
           <div className="absolute inset-0 animate-slow-pan">
-            <Image src="https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&q=80" alt="Luxury Accessible Hotel Room" fill className="object-cover" priority />
+            {/*
+              OPTION A (current — preferred): Young man assists female coworker in wheelchair up an accessibility ramp.
+              Professional, inclusive, clearly shows accessibility. Source: Unsplash+ / Getty Images (free to use).
+              https://unsplash.com/photos/fmiBtYoGRbI
+
+              OPTION B (original luxury hotel room — swap src to compare):
+              src="https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&q=80"
+            */}
+            <Image
+              src="https://plus.unsplash.com/premium_photo-1754218815855-917261001b90?q=80&w=1920&auto=format&fit=crop"
+              alt="Young man assists female coworker in wheelchair up an accessibility ramp at a modern building entrance"
+              fill
+              className="object-cover object-center"
+              priority
+            />
           </div>
 
           <div className="absolute inset-0 bg-black/70" />
