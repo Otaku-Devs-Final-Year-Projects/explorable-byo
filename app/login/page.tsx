@@ -6,6 +6,11 @@ import Link from 'next/link';
 import { ArrowLeft, Lock, Mail, Loader2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
+const DEMO_ACCOUNTS = [
+  { label: 'Guest', email: 'g1@demo.com', password: 'password123' },
+  { label: 'Partner', email: 'p1@demo.com', password: 'password123' },
+];
+
 export default function LoginPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -111,6 +116,24 @@ export default function LoginPage() {
           <p className="text-white/40 text-xs">
             Don't have an account? <Link href="/signup" className="text-hotel-bronze font-bold hover:underline">Sign Up</Link>
           </p>
+
+          {/* Demo account quick-fill */}
+          <div className="mt-6 text-left">
+            <p className="text-[10px] uppercase tracking-widest text-white/30 font-bold mb-3 text-center">Quick Demo Login</p>
+            <div className="flex gap-2">
+              {DEMO_ACCOUNTS.map((acc) => (
+                <button
+                  key={acc.email}
+                  type="button"
+                  onClick={() => { setEmail(acc.email); setPassword(acc.password); setError(null); }}
+                  className="flex-1 bg-white/5 border border-white/10 text-white/60 hover:border-hotel-bronze hover:text-hotel-bronze text-[10px] uppercase tracking-widest font-bold py-2 px-3 transition-all"
+                >
+                  {acc.label}
+                </button>
+              ))}
+            </div>
+            <p className="text-[9px] text-white/20 text-center mt-2">Fills in credentials — then click Secure Login</p>
+          </div>
         </div>
 
       </div>

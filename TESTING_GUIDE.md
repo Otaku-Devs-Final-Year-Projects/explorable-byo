@@ -11,13 +11,19 @@
 
 ## Test Accounts
 
-> These accounts must be created in your Supabase project's Auth panel, or registered via the live signup page at `/signup`. The `role` column in the `profiles` table determines access level.
+> These accounts were seeded directly into Supabase Auth via the project setup scripts. All passwords are `password123`. The `role` column in the `profiles` table determines access level.
 
 | Role | Email | Password | Notes |
 |---|---|---|---|
-| **Admin** | admin@explorablebyo.com | Admin@1234 | `profiles.role` must be set to `admin` in Supabase |
-| **Hotel Partner** | partner@nesbitt.com | Partner@1234 | `profiles.role` = `partner`, must have a venue linked via `owner_id` |
-| **Guest / Tourist** | guest@test.com | Guest@1234 | `profiles.role` = `guest` (default on signup) |
+| **Admin** | admin@explorablebyo.com | Admin@1234 | Must be manually created in Supabase Auth + set `profiles.role` = `admin` |
+| **Hotel Partner** | p1@demo.com | password123 | `profiles.role` = `partner` |
+| **Hotel Partner** | p2@demo.com | password123 | `profiles.role` = `partner` |
+| **Hotel Partner** | p3@demo.com | password123 | `profiles.role` = `partner` |
+| **Hotel Partner** | p4@demo.com | password123 | `profiles.role` = `partner` |
+| **Guest / Tourist** | g1@demo.com | password123 | `profiles.role` = `guest` |
+| **Guest / Tourist** | g2@demo.com | password123 | `profiles.role` = `guest` |
+| **Guest / Tourist** | g3@demo.com | password123 | `profiles.role` = `guest` |
+| **Guest / Tourist** | g4@demo.com | password123 | `profiles.role` = `guest` |
 
 > **How to set admin role**: Go to Supabase Dashboard → Table Editor → `profiles` table → find the user row → set `role` = `admin` and save.
 
