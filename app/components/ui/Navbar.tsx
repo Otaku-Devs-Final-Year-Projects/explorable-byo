@@ -58,6 +58,7 @@ export default function Navbar() {
         { label: 'Training', href: '/training' },
         { label: 'Innovation', href: '/innovation' },
         { label: 'News', href: '/news' },
+        { label: 'Contact', href: '/contact' },
     ];
 
     const isHome = pathname === '/';

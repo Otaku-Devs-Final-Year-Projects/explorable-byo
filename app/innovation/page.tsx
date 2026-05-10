@@ -11,19 +11,19 @@ export default function InnovationPage() {
         {
             title: "Eco-Ramps",
             description: "Low-cost, durable ramps made from recycled materials. Tested for safe gradients and weather resistance.",
-            image: "https://images.unsplash.com/photo-1579407364450-481fe19bcbe8?auto=format&fit=crop&q=80",
+            image: "https://images.unsplash.com/photo-1504328345606-18bbc8c9d7d1?auto=format&fit=crop&w=800&q=80",
             features: ["Recycled Materials", "Weather Resistant", "Easy Installation"]
         },
         {
             title: "QR Code Signage",
             description: "Audio-descriptive QR codes that can be placed on doors and menus to assist guests with visual impairments.",
-            image: "https://images.unsplash.com/photo-1596526131083-e8c638c9c6c7?auto=format&fit=crop&q=80",
+            image: "https://images.unsplash.com/photo-1611532736597-de2d4265fba3?auto=format&fit=crop&w=800&q=80",
             features: ["Audio Descriptions", "Multi-language", "Low Maintenance"]
         },
         {
             title: "Sensory-Friendly Lighting",
             description: "Adjustable warm lighting setups designed to reduce glare and accommodate guests with sensory sensitivities.",
-            image: "https://images.unsplash.com/photo-1565814329452-e1efa11c5e8d?auto=format&fit=crop&q=80",
+            image: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?auto=format&fit=crop&w=800&q=80",
             features: ["Dimmable", "Warm Tones", "Anti-Glare"]
         }
     ];
@@ -40,7 +40,7 @@ export default function InnovationPage() {
                     setTechnologies(data.map(d => ({
                         title: d.title,
                         description: d.description,
-                        image: d.image_url || d.image,
+                        image: (d.image_url && !d.image_url.startsWith('data:')) ? d.image_url : (d.image || ''),
                         features: d.features || []
                     })));
                 }

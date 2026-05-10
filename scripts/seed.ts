@@ -25,19 +25,19 @@ async function seed() {
         {
             title: "Eco-Ramps v2",
             description: "Low-cost, durable ramps made from 100% recycled materials. Tested for optimal 1:12 gradients and severe weather resistance.",
-            image_url: "https://images.unsplash.com/photo-1579407364450-481fe19bcbe8?auto=format&fit=crop&q=80",
+            image_url: "https://images.unsplash.com/photo-1504328345606-18bbc8c9d7d1?auto=format&fit=crop&w=800&q=80",
             features: ["Recycled Materials", "Weather Resistant", "Easy Installation", "High Weight Capacity"]
         },
         {
             title: "Audio QR Signage Hub",
             description: "Generate audio-descriptive QR codes that can be placed on doors and menus to assist guests with visual impairments. Multi-language support.",
-            image_url: "https://images.unsplash.com/photo-1596526131083-e8c638c9c6c7?auto=format&fit=crop&q=80",
+            image_url: "https://images.unsplash.com/photo-1611532736597-de2d4265fba3?auto=format&fit=crop&w=800&q=80",
             features: ["Audio Descriptions", "Multi-language", "Low Maintenance", "Free Generation"]
         },
         {
             title: "Sensory-Responsive Lighting Kits",
             description: "Adjustable warm lighting setups designed to reduce glare and accommodate guests with sensory sensitivities or autism. Smartphone controlled.",
-            image_url: "https://images.unsplash.com/photo-1565814329452-e1efa11c5e8d?auto=format&fit=crop&q=80",
+            image_url: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?auto=format&fit=crop&w=800&q=80",
             features: ["Dimmable", "Warm Tones", "Anti-Glare", "Smart App Control"]
         }
     ];

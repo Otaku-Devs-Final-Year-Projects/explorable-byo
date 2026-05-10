@@ -13,6 +13,19 @@ UPDATE public.venues
 SET image_url = 'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1200&q=80'
 WHERE name ILIKE '%Rainbow Hotel%';
 
+-- Fix Innovation Tools images
+UPDATE public.innovation_tools
+SET image_url = 'https://images.unsplash.com/photo-1504328345606-18bbc8c9d7d1?auto=format&fit=crop&w=800&q=80'
+WHERE title ILIKE '%Ramp%';
+
+UPDATE public.innovation_tools
+SET image_url = 'https://images.unsplash.com/photo-1611532736597-de2d4265fba3?auto=format&fit=crop&w=800&q=80'
+WHERE title ILIKE '%QR%' OR title ILIKE '%Audio%';
+
+UPDATE public.innovation_tools
+SET image_url = 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?auto=format&fit=crop&w=800&q=80'
+WHERE title ILIKE '%Lighting%';
+
 -- Fix news article images (add width parameter for reliable loading)
 UPDATE public.news_articles
 SET image_url = 'https://images.unsplash.com/photo-1521791136064-7986c2920216?auto=format&fit=crop&w=1200&q=80'
