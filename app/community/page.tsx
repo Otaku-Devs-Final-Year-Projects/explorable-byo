@@ -56,6 +56,9 @@ export default function CommunityPage() {
     const [showTagMenu, setShowTagMenu] = useState(false);
     const [postLoading, setPostLoading] = useState(false);
     const [postError, setPostError] = useState<string | null>(null);
+    const [expandedPostId, setExpandedPostId] = useState<string | null>(null);
+    const [repliesCache, setRepliesCache] = useState<Record<string, any[]>>({});
+    const [repliesLoading, setRepliesLoading] = useState<string | null>(null);
 
     // ── FETCH POSTS + REALTIME ──
     useEffect(() => {
@@ -197,6 +200,29 @@ export default function CommunityPage() {
         }
     };
 
+    const toggleReplies = async (postId: string) => {
+        if (expandedPostId === postId) {
+            setExpandedPostId(null);
+            return;
+        }
+        setExpandedPostId(postId);
+        if (repliesCache[postId]) return; // already fetched
+        setRepliesLoading(postId);
+        const { data } = await supabase
+            .from('community_replies')
+            .select('*')
+            .eq('post_id', postId)
+            .order('created_at', { ascending: true });
+        setRepliesCache(prev => ({ ...prev, [postId]: (data || []).map((r: any) => ({
+            id: r.id,
+            author: r.author_name,
+            avatar: r.author_name?.charAt(0).toUpperCase() || '?',
+            content: r.content,
+            time: new Date(r.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+        })) }));
+        setRepliesLoading(null);
+    };
+
     // ── CONDITIONAL RETURNS (after all hooks) ──
     if (loading) return (
         <div className="min-h-screen bg-hotel-cream flex items-center justify-center text-hotel-bronze font-serif text-xl">
@@ -322,14 +348,46 @@ export default function CommunityPage() {
                                         >
                                             <ThumbsUp size={16} /> {post.likes}
                                         </button>
-                                        <button className="flex items-center gap-2 text-xs uppercase tracking-widest font-bold text-gray-400 hover:text-hotel-black transition-colors">
-                                            <MessageSquare size={16} /> {post.replies}
+                                        <button
+                                            onClick={() => toggleReplies(post.id)}
+                                            className={`flex items-center gap-2 text-xs uppercase tracking-widest font-bold transition-colors ${
+                                                expandedPostId === post.id ? 'text-hotel-bronze' : 'text-gray-400 hover:text-hotel-black'
+                                            }`}
+                                        >
+                                            <MessageSquare size={16} /> {post.replies} {post.replies === 1 ? 'Reply' : 'Replies'}
                                         </button>
                                     </div>
                                     <button className="text-gray-300 hover:text-red-500 transition-colors">
                                         <Flag size={16} />
                                     </button>
                                 </div>
+
+                                {/* Inline Replies Panel */}
+                                {expandedPostId === post.id && (
+                                    <div className="mt-4 border-t border-hotel-sand pt-4 space-y-3">
+                                        {repliesLoading === post.id ? (
+                                            <p className="text-xs text-gray-400 italic">Loading replies...</p>
+                                        ) : (repliesCache[post.id] || []).length === 0 ? (
+                                            <p className="text-xs text-gray-400 italic">No replies yet. <Link href={`/community/${post.id}`} className="text-hotel-bronze hover:underline">Be the first to reply →</Link></p>
+                                        ) : (
+                                            <>
+                                                {(repliesCache[post.id] || []).map((r: any) => (
+                                                    <div key={r.id} className="flex gap-3">
+                                                        <div className="w-7 h-7 bg-hotel-black text-white rounded-full flex items-center justify-center font-serif text-xs shrink-0">{r.avatar}</div>
+                                                        <div className="flex-1 bg-hotel-cream rounded-sm px-3 py-2">
+                                                            <div className="flex items-center gap-2 mb-1">
+                                                                <span className="text-xs font-bold">{r.author}</span>
+                                                                <span className="text-[10px] text-gray-400">· {r.time}</span>
+                                                            </div>
+                                                            <p className="text-xs text-gray-600 font-light leading-relaxed">{r.content}</p>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                                <Link href={`/community/${post.id}`} className="block text-[10px] uppercase tracking-widest font-bold text-hotel-bronze hover:underline pt-1">View full thread →</Link>
+                                            </>
+                                        )}
+                                    </div>
+                                )}
 
                             </div>
                         ))}

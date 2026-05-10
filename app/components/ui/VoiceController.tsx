@@ -12,10 +12,11 @@ export default function VoiceController() {
     const [transcriptDisplay, setTranscriptDisplay] = useState("Click mic to start");
     const [commandTriggered, setCommandTriggered] = useState("");
     const recognitionRef = useRef<any>(null);
-    // Tracks whether the user *wants* to be listening — used to auto-restart on silence
+    // Tracks whether the user *wants* to be listening
     const shouldListenRef = useRef(false);
-    // Consecutive error counter to prevent rapid mic cycling
-    const errorCountRef = useRef(0);
+    // Set to true when an error fires; cleared on successful onstart.
+    // onend checks this — if true it does NOT restart (avoids mic hardware cycling).
+    const hadErrorRef = useRef(false);
 
     // Initialize Speech Recognition once on mount
     useEffect(() => {
@@ -33,44 +34,52 @@ export default function VoiceController() {
         recognition.lang = 'en-US';
 
         recognition.onstart = () => {
-            errorCountRef.current = 0; // reset on successful start
+            hadErrorRef.current = false;
             setIsListening(true);
             setTranscriptDisplay("Listening...");
         };
 
         recognition.onend = () => {
-            // Chromium ends the session after silence even with continuous=true.
-            // Restart automatically unless the user explicitly stopped or too many errors.
-            if (shouldListenRef.current && errorCountRef.current < 5) {
-                const delay = Math.min(300 * Math.pow(2, errorCountRef.current), 4000);
+            // If an error just occurred, do NOT restart — it would cause rapid
+            // mic hardware cycling (visible as the mic icon flashing in the taskbar).
+            // The user must click the button again to retry.
+            if (hadErrorRef.current) {
+                shouldListenRef.current = false;
+                setIsListening(false);
+                setTranscriptDisplay("Click mic to start");
+                return;
+            }
+            // Clean end (silence timeout with continuous=true) — safe to restart.
+            if (shouldListenRef.current) {
                 setTimeout(() => {
                     if (!shouldListenRef.current) return;
                     try { recognition.start(); } catch (e) { /* already starting */ }
-                }, delay);
+                }, 300);
             } else {
-                shouldListenRef.current = false;
                 setIsListening(false);
-                setTranscriptDisplay(errorCountRef.current >= 5 ? "Mic unavailable — try again" : "Click mic to start");
+                setTranscriptDisplay("Click mic to start");
             }
         };
 
         recognition.onerror = (event: any) => {
-            // Hard-stop on permission or no-mic errors
-            if (event.error === 'not-allowed' || event.error === 'service-not-allowed' || event.error === 'audio-capture') {
+            hadErrorRef.current = true;
+            if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
                 shouldListenRef.current = false;
-                errorCountRef.current = 99;
                 setIsListening(false);
-                setTranscriptDisplay(event.error === 'audio-capture' ? "No microphone found" : "Microphone permission denied");
-                return;
+                setTranscriptDisplay("Microphone permission denied");
+            } else if (event.error === 'audio-capture') {
+                shouldListenRef.current = false;
+                setIsListening(false);
+                setTranscriptDisplay("No microphone found");
+            } else if (event.error === 'no-speech') {
+                // no-speech is normal — not really an error, let onend restart cleanly
+                hadErrorRef.current = false;
             }
-            // Transient errors (no-speech, network, aborted): count them, let onend restart
-            if (event.error !== 'no-speech') {
-                errorCountRef.current += 1;
-            }
+            // network / aborted / other: hadErrorRef stays true → onend will NOT restart
         };
 
         recognition.onresult = (event: any) => {
-            errorCountRef.current = 0; // reset on successful speech result
+            hadErrorRef.current = false;
             const result = event.results[event.results.length - 1];
             const text = result[0].transcript.toLowerCase().trim();
 
@@ -145,7 +154,7 @@ export default function VoiceController() {
             recognitionRef.current.stop();
         } else {
             shouldListenRef.current = true;
-            errorCountRef.current = 0;
+            hadErrorRef.current = false;
             try {
                 recognitionRef.current.start();
             } catch (e) {
