@@ -67,7 +67,7 @@ export default function VenueMap({ venues }: { venues: any[] }) {
                     <MapPin size={10} /> {venue.location}
                   </p>
                   <Link 
-                    href={`/explore/${venue.id}`} 
+                    href={`/explore/${venue.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')}`} 
                     className="block w-full text-center bg-hotel-bronze text-white text-[10px] font-bold uppercase tracking-widest py-2 hover:bg-hotel-black transition-colors"
                   >
                     View Details

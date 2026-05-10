@@ -173,7 +173,7 @@ export default function GuestDashboardView({ user, profile, onLogout }: { user: 
                             {savedVenues.length > 0 ? (
                                 <div className="grid md:grid-cols-3 gap-6">
                                     {savedVenues.map((item) => (
-                                        <Link key={item.id} href={`/explore/${item.venues?.id}`} className="group relative h-48 rounded-sm overflow-hidden flex items-end p-4 border border-hotel-sand/50 shadow-sm cursor-pointer">
+                                        <Link key={item.id} href={`/explore/${item.venues?.name?.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') ?? ''}`} className="group relative h-48 rounded-sm overflow-hidden flex items-end p-4 border border-hotel-sand/50 shadow-sm cursor-pointer">
                                             {item.venues?.image_url ? (
                                                 <>
                                                     <img src={item.venues.image_url} alt={item.venues.name} className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />

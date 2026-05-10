@@ -6,6 +6,9 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 
+const slugify = (title: string) =>
+    title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+
 export default function NewsPage() {
     const mockArticles = [
         {
@@ -39,6 +42,10 @@ export default function NewsPage() {
 
     const [articles, setArticles] = useState(mockArticles);
     const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        window.scrollTo(0, 0);
+    }, []);
 
     useEffect(() => {
         const fetchNews = async () => {
@@ -88,10 +95,10 @@ export default function NewsPage() {
             <main className="max-w-7xl mx-auto px-6 py-16">
 
                 {/* Featured Article */}
-                <Link href={`/news/${articles[0].id}`} className="mb-20 group cursor-pointer block">
+                <Link href={`/news/${slugify(articles[0].title)}`} className="mb-20 group cursor-pointer block">
                     <span className="text-xs font-bold uppercase tracking-widest text-hotel-bronze block mb-6">Featured Story</span>
                     <div className="grid md:grid-cols-2 gap-0 bg-white shadow-xl hover:shadow-2xl transition-shadow duration-500">
-                        <div className="relative h-64 md:h-auto overflow-hidden">
+                        <div className="relative h-64 md:min-h-[420px] overflow-hidden">
                             <Image src={articles[0].image} alt={articles[0].title} fill className="object-cover group-hover:scale-105 transition-transform duration-700" />
                         </div>
                         <div className="p-10 md:p-16 flex flex-col justify-center">
@@ -116,7 +123,7 @@ export default function NewsPage() {
                 {/* Article Grid */}
                 <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-10">
                     {articles.slice(1).map((article) => (
-                        <Link href={`/news/${article.id}`} key={article.id} className="bg-white border border-hotel-sand hover:border-hotel-bronze transition-colors duration-300 group cursor-pointer flex flex-col">
+                        <Link href={`/news/${slugify(article.title)}`} key={article.id} className="bg-white border border-hotel-sand hover:border-hotel-bronze transition-colors duration-300 group cursor-pointer flex flex-col">
                             <div className="relative h-48 overflow-hidden">
                                 <Image src={article.image} alt={article.title} fill className="object-cover group-hover:scale-105 transition-transform duration-700" />
                             </div>

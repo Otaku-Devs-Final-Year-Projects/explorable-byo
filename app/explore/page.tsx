@@ -164,7 +164,7 @@ export default function ExplorePage() {
  <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
  {filteredVenues.map((venue) => (
  <article key={venue.id} className="group bg-white rounded-sm border border-hotel-sand/30 shadow-sm hover:shadow-2xl transition-all duration-500 overflow-hidden relative">
- <Link href={`/explore/${venue.id}`} className="block relative h-64 overflow-hidden cursor-pointer">
+ <Link href={`/explore/${venue.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')}`} className="block relative h-64 overflow-hidden cursor-pointer">
  {venue.image ? (
  <Image src={venue.image} alt={venue.name} fill className="object-cover group-hover:scale-110 transition-transform duration-700" />
  ) : (
@@ -189,7 +189,7 @@ export default function ExplorePage() {
  <span key={i} className="bg-hotel-cream text-hotel-brown text-[10px] uppercase tracking-wider font-bold px-2 py-1 border border-hotel-bronze/20">{tag}</span>
  ))}
  </div>
- <Link href={`/explore/${venue.id}`} className="block w-full text-center py-3 border border-hotel-black text-hotel-black text-xs font-bold uppercase tracking-widest hover:bg-hotel-black hover:text-white transition-colors duration-300">View Details</Link>
+ <Link href={`/explore/${venue.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')}`} className="block w-full text-center py-3 border border-hotel-black text-hotel-black text-xs font-bold uppercase tracking-widest hover:bg-hotel-black hover:text-white transition-colors duration-300">View Details</Link>
  </div>
  </article>
  ))}

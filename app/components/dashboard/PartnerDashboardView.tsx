@@ -274,7 +274,7 @@ export default function PartnerDashboardView({ user, profile, onLogout }: { user
                                                         <CheckCircle size={10} /> Verified
                                                     </span>
                                                     <Link href={`/dashboard/edit/${venue.id}`} className="text-[10px] text-hotel-bronze uppercase font-bold mt-1 hover:underline border border-hotel-bronze/30 px-2 py-0.5 rounded-sm hover:bg-hotel-bronze/10 transition-colors">✎ Edit Listing</Link>
-                                                    <Link href={`/explore/${venue.id}`} className="text-[10px] text-gray-400 uppercase font-bold hover:underline">View Live</Link>
+                                                    <Link href={`/explore/${venue.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')}`} className="text-[10px] text-gray-400 uppercase font-bold hover:underline">View Live</Link>
                                                 </div>
                                             </div>
                                         ))}

@@ -251,7 +251,7 @@ export default function AdminPortal() {
                                                 <div>
                                                     <h3 className="font-bold text-hotel-black">{venue.name}</h3>
                                                     <p className="text-xs text-gray-400">{venue.address || venue.location}</p>
-                                                    <Link href={`/explore/${venue.id}`} className="text-[10px] text-hotel-bronze hover:underline" target="_blank">Preview listing →</Link>
+                                                    <Link href={`/explore/${venue.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')}`} className="text-[10px] text-hotel-bronze hover:underline" target="_blank">Preview listing →</Link>
                                                 </div>
                                             </div>
                                             <div className="flex gap-2 shrink-0">
@@ -295,7 +295,7 @@ export default function AdminPortal() {
                                                 </td>
                                                 <td className="px-5 py-3">
                                                     <div className="flex gap-2">
-                                                        <Link href={`/explore/${venue.id}`} className="text-[10px] text-hotel-bronze uppercase font-bold hover:underline" target="_blank">View</Link>
+                                                        <Link href={`/explore/${venue.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')}`} className="text-[10px] text-hotel-bronze uppercase font-bold hover:underline" target="_blank">View</Link>
                                                         {!venue.is_verified && (
                                                             <button onClick={() => approveVenue(venue.id)} className="text-[10px] text-green-600 uppercase font-bold hover:underline">Approve</button>
                                                         )}

@@ -12,6 +12,9 @@ import { format } from 'date-fns';
 
 import { useRouter } from 'next/navigation';
 
+const slugify = (name: string) =>
+ name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+
 export default function VenueDetails() {
  const params = useParams();
  const router = useRouter();
@@ -31,11 +34,15 @@ export default function VenueDetails() {
  const [needs, setNeeds] = useState<string[]>([]);
 
  useEffect(() => {
- if (params.id) {
- fetchVenueDetails(params.id as string);
+ window.scrollTo(0, 0);
+ }, []);
+
+ useEffect(() => {
+ if (params.slug) {
+ fetchVenueDetails(params.slug as string);
  }
  checkUser();
- }, [params.id]);
+ }, [params.slug]);
 
  const checkUser = async () => {
  const { data: { session } } = await supabase.auth.getSession();
@@ -44,14 +51,17 @@ export default function VenueDetails() {
  }
  };
 
- const fetchVenueDetails = async (id: string) => {
+ const fetchVenueDetails = async (slug: string) => {
  try {
  setLoading(true);
- const { data, error } = await supabase
+ // Fetch all venues and match by slug
+ const { data: allData, error } = await supabase
  .from('venues')
- .select(`*, venue_features (*), venue_specs (*)`)
- .eq('id', id)
- .single();
+ .select(`*, venue_features (*), venue_specs (*)`);
+
+ if (error) throw error;
+
+ const data = allData?.find((v: any) => slugify(v.name) === slug) || null;
 
  if (error) throw error;
 
