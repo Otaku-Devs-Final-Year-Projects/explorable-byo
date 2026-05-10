@@ -63,7 +63,7 @@ export default function CommunityPage() {
             try {
                 const { data, error } = await supabase
                     .from('community_posts')
-                    .select('*')
+                    .select('*, community_replies(count)')
                     .order('created_at', { ascending: false });
 
                 if (error) throw error;
@@ -74,7 +74,7 @@ export default function CommunityPage() {
                         avatar: d.author_avatar || d.author_name.charAt(0).toUpperCase(),
                         title: d.title,
                         content: d.content,
-                        replies: 0,
+                        replies: d.community_replies?.[0]?.count ?? 0,
                         likes: d.likes || 0,
                         time: new Date(d.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
                         tag: d.tag || "General"

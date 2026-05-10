@@ -72,13 +72,16 @@ export default function ThreadDetailPage() {
                 table: 'community_replies',
                 filter: `post_id=eq.${postId}`,
             }, payload => {
-                setReplies(prev => [...prev, {
-                    id: payload.new.id,
-                    author: payload.new.author_name,
-                    avatar: payload.new.author_avatar || payload.new.author_name?.charAt(0),
-                    content: payload.new.content,
-                    time: 'Just now',
-                }]);
+                setReplies(prev => {
+                    if (prev.find(r => r.id === payload.new.id)) return prev;
+                    return [...prev, {
+                        id: payload.new.id,
+                        author: payload.new.author_name,
+                        avatar: payload.new.author_avatar || payload.new.author_name?.charAt(0),
+                        content: payload.new.content,
+                        time: 'Just now',
+                    }];
+                });
             })
             .subscribe();
 
@@ -96,17 +99,33 @@ export default function ThreadDetailPage() {
         e.preventDefault();
         if (!replyContent.trim() || !currentUser) return;
         setSendingReply(true);
+        const authorName = currentUser.user_metadata?.full_name || currentUser.email?.split('@')[0] || 'Anonymous';
+        const optimistic = {
+            id: `optimistic-${Date.now()}`,
+            author: authorName,
+            avatar: authorName.charAt(0).toUpperCase(),
+            content: replyContent.trim(),
+            time: 'Just now',
+        };
+        setReplies(prev => [...prev, optimistic]);
+        setReplyContent('');
         try {
-            const authorName = currentUser.user_metadata?.full_name || currentUser.email?.split('@')[0] || 'Anonymous';
-            await supabase.from('community_replies').insert({
+            const { data, error } = await supabase.from('community_replies').insert({
                 post_id: postId,
                 author_name: authorName,
                 author_avatar: authorName.charAt(0).toUpperCase(),
-                content: replyContent.trim(),
-            });
-            setReplyContent('');
+                content: optimistic.content,
+            }).select().single();
+            if (error) throw error;
+            // Replace optimistic entry with real DB row
+            setReplies(prev => prev.map(r => r.id === optimistic.id ? {
+                ...r,
+                id: data.id,
+                time: new Date(data.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+            } : r));
         } catch (err) {
             console.error('Reply failed:', err);
+            setReplies(prev => prev.filter(r => r.id !== optimistic.id));
         } finally {
             setSendingReply(false);
         }
