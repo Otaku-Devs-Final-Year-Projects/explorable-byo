@@ -140,7 +140,7 @@ These pages should be accessible to any visitor without an account.
 
 ## Section 2 — Guest / Tourist Role
 
-**Login as**: guest@test.com / Guest@1234  
+**Login as**: g1@demo.com / password123  
 **Starting point after login**: `/dashboard`
 
 ---
@@ -220,7 +220,7 @@ These pages should be accessible to any visitor without an account.
 
 ## Section 3 — Hotel Partner / Manager Role
 
-**Login as**: partner@nesbitt.com / Partner@1234  
+**Login as**: p1@demo.com / password123  
 **Prerequisite**: A venue in the `venues` table must have `owner_id` set to this user's UUID.
 
 ---
