@@ -12,8 +12,10 @@ export default function VoiceController() {
     const [transcriptDisplay, setTranscriptDisplay] = useState("Click mic to start");
     const [commandTriggered, setCommandTriggered] = useState("");
     const recognitionRef = useRef<any>(null);
+    // Tracks whether the user *wants* to be listening — used to auto-restart on silence
+    const shouldListenRef = useRef(false);
 
-    // Initialize Speech Recognition
+    // Initialize Speech Recognition once on mount
     useEffect(() => {
         if (typeof window === "undefined") return;
 
@@ -34,6 +36,24 @@ export default function VoiceController() {
         };
 
         recognition.onend = () => {
+            // Chrome's Speech API ends the session after silence even with continuous=true.
+            // If the user still wants to listen, restart automatically.
+            if (shouldListenRef.current) {
+                try {
+                    recognition.start();
+                } catch (e) {
+                    // Already started — ignore
+                }
+            } else {
+                setIsListening(false);
+                setTranscriptDisplay("Click mic to start");
+            }
+        };
+
+        recognition.onerror = (event: any) => {
+            // 'no-speech' is normal — just restart. Any other error, stop cleanly.
+            if (event.error === 'no-speech') return;
+            shouldListenRef.current = false;
             setIsListening(false);
             setTranscriptDisplay("Click mic to start");
         };
@@ -52,9 +72,10 @@ export default function VoiceController() {
         recognitionRef.current = recognition;
 
         return () => {
+            shouldListenRef.current = false;
             if (recognitionRef.current) recognitionRef.current.stop();
         };
-    }, [pathname]); // Re-bind on route change just to be safe with router context
+    }, []); // Only run once on mount — pathname changes must NOT reinitialise recognition
 
     // Command Logic (Expanded for Phase 3)
     const processCommand = (text: string) => {
@@ -108,8 +129,10 @@ export default function VoiceController() {
         if (!recognitionRef.current) return;
 
         if (isListening) {
+            shouldListenRef.current = false;
             recognitionRef.current.stop();
         } else {
+            shouldListenRef.current = true;
             try {
                 recognitionRef.current.start();
             } catch (e) {
