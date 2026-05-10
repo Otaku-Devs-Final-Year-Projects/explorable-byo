@@ -36,14 +36,13 @@ export default function VoiceController() {
         };
 
         recognition.onend = () => {
-            // Chrome's Speech API ends the session after silence even with continuous=true.
-            // If the user still wants to listen, restart automatically.
+            // Chrome/Vivaldi ends the session after silence even with continuous=true.
+            // Restart automatically unless the user explicitly stopped.
             if (shouldListenRef.current) {
-                try {
-                    recognition.start();
-                } catch (e) {
-                    // Already started — ignore
-                }
+                setTimeout(() => {
+                    if (!shouldListenRef.current) return;
+                    try { recognition.start(); } catch (e) { /* already starting */ }
+                }, 300);
             } else {
                 setIsListening(false);
                 setTranscriptDisplay("Click mic to start");
@@ -51,11 +50,14 @@ export default function VoiceController() {
         };
 
         recognition.onerror = (event: any) => {
-            // 'no-speech' is normal — just restart. Any other error, stop cleanly.
-            if (event.error === 'no-speech') return;
-            shouldListenRef.current = false;
-            setIsListening(false);
-            setTranscriptDisplay("Click mic to start");
+            // Only hard-stop on permission errors — everything else (no-speech,
+            // network, aborted, audio-capture) is transient; let onend restart.
+            if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
+                shouldListenRef.current = false;
+                setIsListening(false);
+                setTranscriptDisplay("Microphone permission denied");
+            }
+            // For all other errors: do nothing — onend will fire and restart
         };
 
         recognition.onresult = (event: any) => {

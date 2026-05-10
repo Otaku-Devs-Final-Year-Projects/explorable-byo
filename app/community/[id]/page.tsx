@@ -99,35 +99,28 @@ export default function ThreadDetailPage() {
         e.preventDefault();
         if (!replyContent.trim() || !currentUser) return;
         setSendingReply(true);
+        const content = replyContent.trim();
         const authorName = currentUser.user_metadata?.full_name || currentUser.email?.split('@')[0] || 'Anonymous';
-        const optimistic = {
-            id: `optimistic-${Date.now()}`,
+        const tempId = `optimistic-${Date.now()}`;
+        setReplies(prev => [...prev, {
+            id: tempId,
             author: authorName,
             avatar: authorName.charAt(0).toUpperCase(),
-            content: replyContent.trim(),
+            content,
             time: 'Just now',
-        };
-        setReplies(prev => [...prev, optimistic]);
+        }]);
         setReplyContent('');
-        try {
-            const { data, error } = await supabase.from('community_replies').insert({
-                post_id: postId,
-                author_name: authorName,
-                author_avatar: authorName.charAt(0).toUpperCase(),
-                content: optimistic.content,
-            }).select().single();
-            if (error) throw error;
-            // Replace optimistic entry with real DB row
-            setReplies(prev => prev.map(r => r.id === optimistic.id ? {
-                ...r,
-                id: data.id,
-                time: new Date(data.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-            } : r));
-        } catch (err) {
-            console.error('Reply failed:', err);
-            setReplies(prev => prev.filter(r => r.id !== optimistic.id));
-        } finally {
-            setSendingReply(false);
+        const { error } = await supabase.from('community_replies').insert({
+            post_id: postId,
+            author_name: authorName,
+            author_avatar: authorName.charAt(0).toUpperCase(),
+            content,
+        });
+        setSendingReply(false);
+        if (error) {
+            console.error('Reply failed:', error);
+            setReplies(prev => prev.filter(r => r.id !== tempId));
+            setReplyContent(content); // restore so user can try again
         }
     };
 
