@@ -17,7 +17,7 @@ export default function NewsPage() {
             excerpt: "A landmark agreement to integrate our verified accessibility data directly into the national tourism planning dashboard.",
             category: "Partnership",
             date: "Nov 12, 2025",
-            image: "https://images.unsplash.com/photo-1556761175-5973dc0f32b7?auto=format&fit=crop&q=80",
+            image: "https://images.unsplash.com/photo-1521791136064-7986c2920216?auto=format&fit=crop&w=1200&q=80",
             featured: true
         },
         {
@@ -26,7 +26,7 @@ export default function NewsPage() {
             excerpt: "Our web app now supports full voice navigation for visually impaired users. Learn how to use 'Peace of Mind' mode.",
             category: "Platform Update",
             date: "Oct 28, 2025",
-            image: "https://images.unsplash.com/photo-1596742578443-7682ef5251cd?auto=format&fit=crop&q=80",
+            image: "https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?auto=format&fit=crop&w=1200&q=80",
             featured: false
         },
         {
@@ -35,7 +35,7 @@ export default function NewsPage() {
             excerpt: "We are looking for local volunteers to help us verify 50 new venues in the CBD this coming weekend.",
             category: "Community",
             date: "Oct 15, 2025",
-            image: "https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?auto=format&fit=crop&q=80",
+            image: "https://images.unsplash.com/photo-1559027615-cd4628902d4a?auto=format&fit=crop&w=1200&q=80",
             featured: false
         }
     ];
@@ -63,7 +63,7 @@ export default function NewsPage() {
                         excerpt: d.excerpt,
                         category: d.category,
                         date: new Date(d.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-                        image: d.image_url,
+                        image: d.image_url?.startsWith('data:') ? "https://images.unsplash.com/photo-1521791136064-7986c2920216?auto=format&fit=crop&w=1200&q=80" : d.image_url,
                         featured: d.is_featured
                     })));
                 }

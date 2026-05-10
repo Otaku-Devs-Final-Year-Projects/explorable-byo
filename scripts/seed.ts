@@ -116,7 +116,7 @@ async function seed() {
             title: "ExplorAble Partners with Zimbabwe Tourism Authority",
             excerpt: "A landmark agreement to integrate our verified accessibility data directly into the national tourism planning dashboard.",
             category: "Partnership",
-            image_url: "https://images.unsplash.com/photo-1556761175-5973dc0f32b7?auto=format&fit=crop&q=80",
+            image_url: "https://images.unsplash.com/photo-1521791136064-7986c2920216?auto=format&fit=crop&w=1200&q=80",
             is_featured: true,
             content: "Full content here..."
         },
@@ -124,7 +124,7 @@ async function seed() {
             title: "New Feature: AI-Powered Audio Navigation",
             excerpt: "Our web app now supports full voice navigation for visually impaired users. Learn how to use 'Peace of Mind' mode.",
             category: "Platform Update",
-            image_url: "https://images.unsplash.com/photo-1596742578443-7682ef5251cd?auto=format&fit=crop&q=80",
+            image_url: "https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?auto=format&fit=crop&w=1200&q=80",
             is_featured: false,
             content: "Full content here..."
         },
@@ -132,7 +132,7 @@ async function seed() {
             title: "Call for Volunteers: Bulawayo Mapping Drive",
             excerpt: "We are looking for local volunteers to help us verify 50 new venues in the CBD this coming weekend. Will provide training.",
             category: "Community",
-            image_url: "https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?auto=format&fit=crop&q=80",
+            image_url: "https://images.unsplash.com/photo-1559027615-cd4628902d4a?auto=format&fit=crop&w=1200&q=80",
             is_featured: false,
             content: "Full content here..."
         }

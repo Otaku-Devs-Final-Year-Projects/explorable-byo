@@ -61,7 +61,7 @@ export default function ExplorePage() {
  lng: v.longitude, // Captured from DB
  rating: v.rating,
  reviews:"Verified",
- image: v.image_url,
+ image: (v.image_url && !v.image_url.startsWith('data:') && !v.image_url.includes('bing.net')) ? v.image_url : null,
  price:"Enquire",
  tags: tags
  };
@@ -164,11 +164,16 @@ export default function ExplorePage() {
  <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
  {filteredVenues.map((venue) => (
  <article key={venue.id} className="group bg-white rounded-sm border border-hotel-sand/30 shadow-sm hover:shadow-2xl transition-all duration-500 overflow-hidden relative">
- <Link href={`/explore/${venue.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')}`} className="block relative h-64 overflow-hidden cursor-pointer">
+ <Link href={`/explore/${venue.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')}`} className="block relative h-64 overflow-hidden cursor-pointer bg-gradient-to-br from-hotel-sand to-hotel-cream">
  {venue.image ? (
  <Image src={venue.image} alt={venue.name} fill className="object-cover group-hover:scale-110 transition-transform duration-700" />
  ) : (
- <div className="w-full h-full bg-gray-200 flex items-center justify-center text-gray-400">No Image</div>
+ <div className="w-full h-full flex flex-col items-center justify-center gap-2">
+ <div className="w-12 h-12 rounded-full bg-hotel-bronze/20 flex items-center justify-center">
+ <MapPin size={20} className="text-hotel-bronze" />
+ </div>
+ <span className="text-xs text-hotel-bronze font-bold uppercase tracking-widest">No Photo Yet</span>
+ </div>
  )}
  <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-md px-3 py-1 text-xs font-bold text-hotel-black shadow-sm">{venue.price}</div>
  </Link>
