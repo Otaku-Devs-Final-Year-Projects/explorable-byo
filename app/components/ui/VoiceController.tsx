@@ -14,6 +14,8 @@ export default function VoiceController() {
     const recognitionRef = useRef<any>(null);
     // Tracks whether the user *wants* to be listening — used to auto-restart on silence
     const shouldListenRef = useRef(false);
+    // Consecutive error counter to prevent rapid mic cycling
+    const errorCountRef = useRef(0);
 
     // Initialize Speech Recognition once on mount
     useEffect(() => {
@@ -31,36 +33,44 @@ export default function VoiceController() {
         recognition.lang = 'en-US';
 
         recognition.onstart = () => {
+            errorCountRef.current = 0; // reset on successful start
             setIsListening(true);
             setTranscriptDisplay("Listening...");
         };
 
         recognition.onend = () => {
-            // Chrome/Vivaldi ends the session after silence even with continuous=true.
-            // Restart automatically unless the user explicitly stopped.
-            if (shouldListenRef.current) {
+            // Chromium ends the session after silence even with continuous=true.
+            // Restart automatically unless the user explicitly stopped or too many errors.
+            if (shouldListenRef.current && errorCountRef.current < 5) {
+                const delay = Math.min(300 * Math.pow(2, errorCountRef.current), 4000);
                 setTimeout(() => {
                     if (!shouldListenRef.current) return;
                     try { recognition.start(); } catch (e) { /* already starting */ }
-                }, 300);
+                }, delay);
             } else {
+                shouldListenRef.current = false;
                 setIsListening(false);
-                setTranscriptDisplay("Click mic to start");
+                setTranscriptDisplay(errorCountRef.current >= 5 ? "Mic unavailable — try again" : "Click mic to start");
             }
         };
 
         recognition.onerror = (event: any) => {
-            // Only hard-stop on permission errors — everything else (no-speech,
-            // network, aborted, audio-capture) is transient; let onend restart.
-            if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
+            // Hard-stop on permission or no-mic errors
+            if (event.error === 'not-allowed' || event.error === 'service-not-allowed' || event.error === 'audio-capture') {
                 shouldListenRef.current = false;
+                errorCountRef.current = 99;
                 setIsListening(false);
-                setTranscriptDisplay("Microphone permission denied");
+                setTranscriptDisplay(event.error === 'audio-capture' ? "No microphone found" : "Microphone permission denied");
+                return;
             }
-            // For all other errors: do nothing — onend will fire and restart
+            // Transient errors (no-speech, network, aborted): count them, let onend restart
+            if (event.error !== 'no-speech') {
+                errorCountRef.current += 1;
+            }
         };
 
         recognition.onresult = (event: any) => {
+            errorCountRef.current = 0; // reset on successful speech result
             const result = event.results[event.results.length - 1];
             const text = result[0].transcript.toLowerCase().trim();
 
@@ -135,6 +145,7 @@ export default function VoiceController() {
             recognitionRef.current.stop();
         } else {
             shouldListenRef.current = true;
+            errorCountRef.current = 0;
             try {
                 recognitionRef.current.start();
             } catch (e) {

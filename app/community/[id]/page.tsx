@@ -56,7 +56,7 @@ export default function ThreadDetailPage() {
             setReplies((data || []).map((r: any) => ({
                 id: r.id,
                 author: r.author_name,
-                avatar: r.author_avatar || r.author_name?.charAt(0),
+                avatar: r.author_name?.charAt(0).toUpperCase() || '?',
                 content: r.content,
                 time: new Date(r.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
             })));
@@ -77,7 +77,7 @@ export default function ThreadDetailPage() {
                     return [...prev, {
                         id: payload.new.id,
                         author: payload.new.author_name,
-                        avatar: payload.new.author_avatar || payload.new.author_name?.charAt(0),
+                        avatar: payload.new.author_name?.charAt(0).toUpperCase() || '?',
                         content: payload.new.content,
                         time: 'Just now',
                     }];
@@ -113,7 +113,6 @@ export default function ThreadDetailPage() {
         const { error } = await supabase.from('community_replies').insert({
             post_id: postId,
             author_name: authorName,
-            author_avatar: authorName.charAt(0).toUpperCase(),
             content,
         });
         setSendingReply(false);
