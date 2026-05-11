@@ -15,7 +15,6 @@ export default function VoiceController() {
     const recognitionRef = useRef<any>(null);
     const isActiveRef = useRef(false);
     const restartTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-    const consecutiveErrorsRef = useRef(0);
 
     useEffect(() => {
         if (typeof window === "undefined") return;
@@ -55,35 +54,27 @@ export default function VoiceController() {
                 'not-allowed':            'Mic permission denied — allow mic in browser settings',
                 'service-not-allowed':    'Speech service blocked — try Chrome browser',
                 'audio-capture':          'No microphone found',
-                'network':                'Network error — Chrome needs internet for speech API',
-                'no-speech':              'No speech detected',
-                'aborted':                'Restarting…',
+                'network':                'Connecting to speech servers…',
+                'no-speech':              '',
+                'aborted':                '',
                 'bad-grammar':            'Grammar error',
                 'language-not-supported': 'Language not supported',
             };
             const display = messages[err] ?? `Error: ${err}`;
-            setErrorMsg(display);
+            if (display) setErrorMsg(display);
 
+            // Hard stop only for unrecoverable errors
             if (err === 'not-allowed' || err === 'service-not-allowed' || err === 'audio-capture') {
                 isActiveRef.current = false;
                 setIsListening(false);
                 setTranscript("");
                 return;
             }
-
-            if (err !== 'no-speech' && err !== 'aborted') {
-                consecutiveErrorsRef.current += 1;
-                if (consecutiveErrorsRef.current >= 3) {
-                    isActiveRef.current = false;
-                    setIsListening(false);
-                    setTranscript("");
-                    setErrorMsg(`Stopped after repeated "${err}" errors. Try Chrome/Edge on HTTPS.`);
-                }
-            }
+            // All other errors (network, no-speech, aborted) are transient —
+            // onend will restart automatically, no counter needed
         };
 
         recognition.onresult = (event: any) => {
-            consecutiveErrorsRef.current = 0;
             setErrorMsg("");
             const result = event.results[event.results.length - 1];
             const text = result[0].transcript.toLowerCase().trim();
@@ -104,7 +95,6 @@ export default function VoiceController() {
 
     const stopListening = () => {
         isActiveRef.current = false;
-        consecutiveErrorsRef.current = 0;
         if (restartTimerRef.current) clearTimeout(restartTimerRef.current);
         setIsListening(false);
         setTranscript("");
@@ -159,7 +149,6 @@ export default function VoiceController() {
         if (isActiveRef.current) {
             stopListening();
         } else {
-            consecutiveErrorsRef.current = 0;
             isActiveRef.current = true;
             setIsListening(true);
             setTranscript("Starting…");
