@@ -127,7 +127,12 @@ export default function InnovationPage() {
 
                     <div className="grid md:grid-cols-2 gap-8">
                         {/* Video Tutorial Card */}
-                        <div className="bg-stone-900 text-white p-8 md:p-12 shadow-xl flex flex-col justify-between group cursor-pointer relative overflow-hidden">
+                        <a
+                            href="https://www.youtube.com/results?search_query=how+to+install+accessible+wheelchair+ramp+hospitality"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="bg-stone-900 text-white p-8 md:p-12 shadow-xl flex flex-col justify-between group cursor-pointer relative overflow-hidden no-underline"
+                        >
                             <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:scale-110 transition-transform duration-500">
                                 <Play size={100} />
                             </div>
@@ -139,12 +144,12 @@ export default function InnovationPage() {
                                 <p className="font-light text-stone-400 mb-8 max-w-sm">A 5-minute video guide on measuring, assembling, and securing recycled ramps for your venue entrance.</p>
                             </div>
                             <div className="relative z-10 flex items-center text-xs uppercase tracking-widest font-bold text-[#C6A87C]">
-                                Watch Video <ChevronRight size={14} className="ml-2" />
+                                Watch on YouTube <ChevronRight size={14} className="ml-2" />
                             </div>
-                        </div>
+                        </a>
 
                         {/* PDF Resource Card */}
-                        <div className="bg-white border border-stone-200 p-8 md:p-12 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col justify-between group cursor-pointer relative overflow-hidden">
+                        <Link href="/innovation/guide" target="_blank" className="bg-white border border-stone-200 p-8 md:p-12 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col justify-between group cursor-pointer relative overflow-hidden no-underline">
                             <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:scale-110 transition-transform duration-500 text-stone-900">
                                 <FileText size={100} />
                             </div>
@@ -153,12 +158,12 @@ export default function InnovationPage() {
                                     <FileText size={20} />
                                 </div>
                                 <h3 className="font-serif text-3xl mb-4 text-stone-900">Audio QR Setup Guide</h3>
-                                <p className="font-light text-stone-500 mb-8 max-w-sm">A comprehensive PDF manual on generating and printing audio-descriptive QR codes for visually impaired guests.</p>
+                                <p className="font-light text-stone-500 mb-8 max-w-sm">A comprehensive manual on generating and printing audio-descriptive QR codes for visually impaired guests. Open and print to save as PDF.</p>
                             </div>
                             <div className="relative z-10 flex items-center text-xs uppercase tracking-widest font-bold text-stone-500 group-hover:text-[#C6A87C] transition-colors">
-                                Download PDF <Download size={14} className="ml-2" />
+                                View &amp; Download Guide <Download size={14} className="ml-2" />
                             </div>
-                        </div>
+                        </Link>
                     </div>
                 </section>
 

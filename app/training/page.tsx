@@ -41,13 +41,22 @@ export default function TrainingPortal() {
      setCurrentUser(session?.user || null);
 
      if (session?.user) {
+       // Load from localStorage immediately (works without DB table)
+       const localKey = `training_progress_${session.user.id}`;
+       const localData: Record<string, string> = JSON.parse(localStorage.getItem(localKey) || '{}');
+       setUserProgress(localData);
+
+       // Supplement from Supabase if the table exists
        const { data } = await supabase
          .from('user_training_progress')
          .select('module_id, status')
          .eq('user_id', session.user.id);
-       const map: Record<string, string> = {};
-       (data || []).forEach((p: any) => { map[p.module_id] = p.status; });
-       setUserProgress(map);
+       if (data && data.length > 0) {
+         const merged: Record<string, string> = { ...localData };
+         data.forEach((p: any) => { merged[p.module_id] = p.status; });
+         localStorage.setItem(localKey, JSON.stringify(merged));
+         setUserProgress(merged);
+       }
      }
      setLoading(false);
    };

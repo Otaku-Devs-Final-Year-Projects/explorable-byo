@@ -69,14 +69,20 @@ export default function TrainingModulePage() {
             if (!session?.user) { setNotLoggedIn(true); setLoading(false); return; }
             setCurrentUser(session.user);
 
-            // Fetch all progress for this user
+            // Load from localStorage first — works even without DB table
+            const localKey = `training_progress_${session.user.id}`;
+            const localData: Record<string, string> = JSON.parse(localStorage.getItem(localKey) || '{}');
+            const progressMap: Record<string, string> = { ...localData };
+
+            // Supplement from Supabase (best-effort)
             const { data } = await supabase
                 .from('user_training_progress')
                 .select('module_id, status')
                 .eq('user_id', session.user.id);
-
-            const progressMap: Record<string, string> = {};
-            (data || []).forEach((p: any) => { progressMap[p.module_id] = p.status; });
+            if (data && data.length > 0) {
+                data.forEach((p: any) => { progressMap[p.module_id] = p.status; });
+                localStorage.setItem(localKey, JSON.stringify(progressMap));
+            }
             setUserProgress(progressMap);
             setAllComplete(Object.keys(MODULE_CONTENT).every(id => progressMap[id] === 'completed'));
             setLoading(false);
@@ -87,22 +93,25 @@ export default function TrainingModulePage() {
     const handleMarkComplete = async () => {
         if (!currentUser || !moduleData) return;
         setCompleting(true);
-        try {
-            await supabase.from('user_training_progress').upsert({
-                user_id: currentUser.id,
-                module_id: moduleId,
-                status: 'completed',
-            }, { onConflict: 'user_id,module_id' });
 
-            const newProgress = { ...userProgress, [moduleId]: 'completed' };
-            setUserProgress(newProgress);
-            const nowAllComplete = Object.keys(MODULE_CONTENT).every(id => newProgress[id] === 'completed');
-            setAllComplete(nowAllComplete);
-        } catch (err) {
-            console.error('Failed to mark complete:', err);
-        } finally {
-            setCompleting(false);
-        }
+        const newProgress = { ...userProgress, [moduleId]: 'completed' };
+
+        // Save to localStorage immediately — guaranteed to persist
+        const localKey = `training_progress_${currentUser.id}`;
+        localStorage.setItem(localKey, JSON.stringify(newProgress));
+        setUserProgress(newProgress);
+        setAllComplete(Object.keys(MODULE_CONTENT).every(id => newProgress[id] === 'completed'));
+
+        // Best-effort Supabase sync (won't fail the UI if table doesn't exist)
+        supabase.from('user_training_progress').upsert({
+            user_id: currentUser.id,
+            module_id: moduleId,
+            status: 'completed',
+        }, { onConflict: 'user_id,module_id' }).then(null, err => {
+            console.warn('Supabase progress sync failed (table may not exist yet):', err);
+        });
+
+        setCompleting(false);
     };
 
     const isCompleted = userProgress[moduleId] === 'completed';
