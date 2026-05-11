@@ -27,7 +27,7 @@ All accounts use `password123`. The login page has **quick-fill buttons** for Gu
 
 | What you can access | Public (no login) | Guest | Partner | Admin |
 |---|:---:|:---:|:---:|:---:|
-| Homepage, Explore, News, Contact | ✅ | ✅ | ✅ | ✅ |
+| Home, Explore, News, Contact | ✅ | ✅ | ✅ | ✅ |
 | Community (post & reply) | ❌ | ✅ | ✅ | ✅ |
 | Dashboard & Bookings | ❌ | ✅ | ✅ | ✅ |
 | Training Academy | ❌ | ❌ | ✅ | ✅ |
@@ -45,7 +45,7 @@ All accounts use `password123`. The login page has **quick-fill buttons** for Gu
 
 **1.1 — Arrive as a public visitor (no login)**
 
-Open the live URL without logging in. You land on the homepage with a hero image and the tagline about Bulawayo's most accessible venues. The navbar only shows **Explore**, **News**, **Contact**, and **Login** — Community, Training, and Innovation are intentionally hidden.
+Open the live URL without logging in. You land on the homepage with a hero image and the tagline about Bulawayo's most accessible venues. The navbar only shows **Home**, **Explore**, **News**, **Contact**, and **Login** — Community, Training, and Innovation are intentionally hidden.
 
 Scroll down to see the feature highlights. Click **Explore Venues** to go to `/explore`.
 
@@ -60,7 +60,7 @@ On the venue detail page, check:
 
 Click **Login** in the navbar. On the login page, click the **Guest** quick-fill button — it auto-fills `g1@demo.com / password123`. Click **Secure Login**.
 
-You land on the **Guest Dashboard**. Notice the navbar now shows **Community** as well. Training and Innovation remain hidden — those are for partners only.
+You land on the **Guest Dashboard**. Notice the navbar now shows **Community** as well. **Home** is always the first link. Training and Innovation remain hidden — those are for partners only.
 
 **1.3 — Make a booking enquiry**
 
@@ -161,7 +161,7 @@ Sign out completely (or open a fresh incognito tab). Try navigating directly to:
 | https://explorable-byo.vercel.app/training | **Login Required** gate |
 | https://explorable-byo.vercel.app/innovation | **Login Required** gate |
 
-Also check the navbar — only Explore, News, Contact, and Login are visible. Community, Training, and Innovation links do not appear.
+Also check the navbar — only Home, Explore, News, Contact, and Login are visible. Community, Training, and Innovation links do not appear.
 
 **5.2 — Guest tries to access partner-only pages**
 
@@ -178,7 +178,7 @@ Check the navbar — **Training** and **Innovation** are hidden. **Community** i
 
 **5.3 — Partner has full access**
 
-Log in as **p1@demo.com**. The navbar now shows all six links: Explore, Community, Training, Innovation, News, Contact. Navigate to `/training` and `/innovation` — both load their full content (no gate).
+Log in as **p1@demo.com**. The navbar now shows all seven links: Home, Explore, Community, Training, Innovation, News, Contact. Navigate to `/training` and `/innovation` — both load their full content (no gate).
 
 ---
 

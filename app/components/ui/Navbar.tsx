@@ -67,6 +67,7 @@ export default function Navbar() {
     }, []); // run once on mount only — onAuthStateChange handles all subsequent changes
 
     const allLinks = [
+        { label: 'Home', href: '/', roles: ['public', 'guest', 'partner', 'admin'] },
         { label: 'Explore', href: '/explore', roles: ['public', 'guest', 'partner', 'admin'] },
         { label: 'Community', href: '/community', roles: ['guest', 'partner', 'admin'] },
         { label: 'Training', href: '/training', roles: ['partner', 'admin'] },
