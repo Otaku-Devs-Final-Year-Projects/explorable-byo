@@ -13,6 +13,7 @@ export default function Navbar() {
     const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [userName, setUserName] = useState('');
     const [userRole, setUserRole] = useState<string>('public');
+    const [authLoading, setAuthLoading] = useState(true);
 
     // Close mobile menu on route change
     useEffect(() => {
@@ -28,7 +29,7 @@ export default function Navbar() {
         return () => window.removeEventListener('scroll', handleScroll);
     }, []);
 
-    // Check auth
+    // Check auth — runs once on mount; subscription handles login/logout changes
     useEffect(() => {
         const fetchRole = async (userId: string) => {
             const { data: profile } = await supabase
@@ -46,6 +47,7 @@ export default function Navbar() {
                 setIsLoggedIn(false);
                 setUserRole('public');
             }
+            setAuthLoading(false);
         };
         checkAuth();
 
@@ -58,10 +60,11 @@ export default function Navbar() {
                 setIsLoggedIn(false);
                 setUserRole('public');
             }
+            setAuthLoading(false);
         });
 
         return () => subscription.unsubscribe();
-    }, [pathname]); // Re-check on nav in case of login/logout
+    }, []); // run once on mount only — onAuthStateChange handles all subsequent changes
 
     const allLinks = [
         { label: 'Explore', href: '/explore', roles: ['public', 'guest', 'partner', 'admin'] },
@@ -94,9 +97,9 @@ export default function Navbar() {
                             <span className="text-[9px] uppercase tracking-[0.2em] text-hotel-bronze mt-1 group-hover:text-white transition-colors">Byo Collection</span>
                         </Link>
 
-                        {/* Desktop Links */}
+                        {/* Desktop Links — hidden until auth resolves to avoid role flash */}
                         <div className="hidden md:flex items-center space-x-8">
-                            {links.map((link) => (
+                            {!authLoading && links.map((link) => (
                                 <Link
                                     key={link.href}
                                     href={link.href}
@@ -109,7 +112,7 @@ export default function Navbar() {
 
                         {/* Desktop Auth/Action */}
                         <div className="hidden md:flex items-center">
-                            {isLoggedIn ? (
+                            {!authLoading && (isLoggedIn ? (
                                 <Link href="/dashboard" className="flex items-center gap-3 bg-white/10 border border-white/20 px-4 py-2 hover:bg-hotel-bronze hover:border-hotel-bronze transition-colors rounded-full">
                                     <div className="w-6 h-6 bg-hotel-bronze rounded-full text-white flex items-center justify-center font-bold text-xs uppercase">
                                         {userName.charAt(0)}
@@ -120,7 +123,7 @@ export default function Navbar() {
                                 <Link href="/login" className="flex items-center gap-2 text-xs uppercase tracking-widest font-bold hover:text-hotel-bronze transition-colors px-4 py-2 border border-transparent hover:border-white/20">
                                     <User size={16} /> Login
                                 </Link>
-                            )}
+                            ))}
                         </div>
 
                         {/* Mobile Menu Toggle */}
@@ -138,7 +141,7 @@ export default function Navbar() {
             {/* Mobile Drawer */}
             <div className={`fixed inset-0 bg-hotel-black z-50 transform transition-transform duration-500 ease-in-out ${isOpen ? 'translate-x-0' : 'translate-x-full'} md:hidden flex flex-col justify-center items-center`}>
                 <div className="flex flex-col space-y-8 text-center w-full px-6">
-                    {links.map((link) => (
+                    {!authLoading && links.map((link) => (
                         <Link
                             key={link.href}
                             href={link.href}
@@ -150,7 +153,7 @@ export default function Navbar() {
 
                     <div className="w-16 h-[1px] bg-white/20 mx-auto my-4"></div>
 
-                    {isLoggedIn ? (
+                    {!authLoading && (isLoggedIn ? (
                         <Link href="/dashboard" className="text-sm uppercase tracking-widest font-bold text-hotel-bronze hover:text-white">
                             Go to Dashboard
                         </Link>
@@ -163,7 +166,7 @@ export default function Navbar() {
                                 Sign Up
                             </Link>
                         </div>
-                    )}
+                    ))}
                 </div>
             </div>
         </>

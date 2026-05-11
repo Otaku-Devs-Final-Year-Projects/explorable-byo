@@ -5,6 +5,7 @@ import { MessageSquare, Star, ThumbsUp, Flag } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import Link from 'next/link';
+import LoginGate from '../components/ui/LoginGate';
 
 const TAGS = ['General', 'Review', 'Question', 'Dining', 'Accommodation', 'Transport', 'Activities'];
 
@@ -49,6 +50,8 @@ export default function CommunityPage() {
     const [discussions, setDiscussions] = useState<any[]>(mockDiscussions);
     const [loading, setLoading] = useState(true);
     const [currentUser, setCurrentUser] = useState<any>(null);
+    const [authChecked, setAuthChecked] = useState(false);
+    const [notLoggedIn, setNotLoggedIn] = useState(false);
     const [topVenues, setTopVenues] = useState<{ name: string; rating: number; id: string }[]>([]);
     const [newTitle, setNewTitle] = useState('');
     const [newContent, setNewContent] = useState('');
@@ -120,6 +123,8 @@ export default function CommunityPage() {
         const getUser = async () => {
             const { data: { session } } = await supabase.auth.getSession();
             setCurrentUser(session?.user || null);
+            setNotLoggedIn(!session?.user);
+            setAuthChecked(true);
         };
         getUser();
 
@@ -224,10 +229,17 @@ export default function CommunityPage() {
     };
 
     // ── CONDITIONAL RETURNS (after all hooks) ──
-    if (loading) return (
+    if (!authChecked || loading) return (
         <div className="min-h-screen bg-hotel-cream flex items-center justify-center text-hotel-bronze font-serif text-xl">
             Loading Community...
         </div>
+    );
+
+    if (notLoggedIn) return (
+        <LoginGate
+            message="Please log in to access the Community Forum."
+            subMessage="Join the conversation — share reviews, ask questions, and connect with other accessible tourism enthusiasts."
+        />
     );
 
     return (

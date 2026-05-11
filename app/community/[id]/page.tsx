@@ -16,13 +16,15 @@ export default function ThreadDetailPage() {
     const [post, setPost] = useState<any>(null);
     const [replies, setReplies] = useState<any[]>([]);
     const [currentUser, setCurrentUser] = useState<any>(null);
+    const [notLoggedIn, setNotLoggedIn] = useState(false);
     const [replyContent, setReplyContent] = useState('');
     const [sendingReply, setSendingReply] = useState(false);
 
     useEffect(() => {
         const init = async () => {
             const { data: { session } } = await supabase.auth.getSession();
-            setCurrentUser(session?.user || null);
+            if (!session?.user) { setNotLoggedIn(true); setLoading(false); return; }
+            setCurrentUser(session.user);
             await fetchPost();
             await fetchReplies();
             setLoading(false);
@@ -122,6 +124,13 @@ export default function ThreadDetailPage() {
             setReplyContent(content); // restore so user can try again
         }
     };
+
+    if (notLoggedIn) return (
+        <LoginGate
+            message="Please log in to view this discussion thread."
+            subMessage="Join the community to read, reply, and participate in accessibility conversations."
+        />
+    );
 
     if (loading) return (
         <div className="min-h-screen bg-hotel-cream flex items-center justify-center text-hotel-bronze font-serif text-xl">
