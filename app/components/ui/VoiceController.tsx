@@ -16,10 +16,6 @@ export default function VoiceController() {
     const isActiveRef = useRef(false);
     // Timer handle for restart-after-natural-end cycles
     const restartTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-    // Keepalive stream: holds the mic hardware open continuously so the system
-    // recording indicator (PulseAudio / system sound settings) does NOT flicker
-    // when the SpeechRecognition API internally cycles between sessions.
-    const keepaliveStreamRef = useRef<MediaStream | null>(null);
 
     // Initialize Speech Recognition once on mount
     useEffect(() => {
@@ -80,23 +76,13 @@ export default function VoiceController() {
         return () => {
             isActiveRef.current = false;
             if (restartTimerRef.current) clearTimeout(restartTimerRef.current);
-            releaseKeepalive();
             try { recognition.abort(); } catch (_) {}
         };
     }, []); // Only run once on mount
 
-    // Release the keepalive MediaStream and stop the hardware mic
-    const releaseKeepalive = () => {
-        if (keepaliveStreamRef.current) {
-            keepaliveStreamRef.current.getTracks().forEach(t => t.stop());
-            keepaliveStreamRef.current = null;
-        }
-    };
-
     const stopListening = () => {
         isActiveRef.current = false;
         if (restartTimerRef.current) clearTimeout(restartTimerRef.current);
-        releaseKeepalive();
         setIsListening(false);
         setTranscriptDisplay("Click mic to start");
         try { recognitionRef.current?.abort(); } catch (_) {}
@@ -150,29 +136,12 @@ export default function VoiceController() {
         setTimeout(() => setCommandTriggered(""), 2500);
     };
 
-    const toggleListening = async () => {
+    const toggleListening = () => {
         if (!recognitionRef.current) return;
 
         if (isActiveRef.current) {
-            // --- STOP ---
             stopListening();
         } else {
-            // --- START ---
-            // Acquire a keepalive MediaStream first. This holds the mic hardware
-            // open at the OS/PulseAudio level for the entire session, so the
-            // system recording indicator stays steady even when the SpeechRecognition
-            // API internally restarts its own stream due to silence timeouts.
-            try {
-                keepaliveStreamRef.current = await navigator.mediaDevices.getUserMedia({ audio: true });
-            } catch (err: any) {
-                const name = err?.name || '';
-                if (name === 'NotAllowedError' || name === 'PermissionDeniedError') {
-                    setTranscriptDisplay("Microphone permission denied");
-                } else {
-                    setTranscriptDisplay("No microphone found");
-                }
-                return;
-            }
             isActiveRef.current = true;
             setIsListening(true);
             setTranscriptDisplay("Listening...");
