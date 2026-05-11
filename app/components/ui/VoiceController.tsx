@@ -1,190 +1,69 @@
 "use client";
 
-import { useEffect, useState, useRef } from 'react';
+import 'regenerator-runtime/runtime';
+import { useState, useEffect } from 'react';
+import SpeechRecognition, { useSpeechRecognition } from 'react-speech-recognition';
 import { useRouter } from 'next/navigation';
 import { Mic, MicOff, Activity, AlertCircle } from 'lucide-react';
 
 export default function VoiceController() {
     const router = useRouter();
-
-    const [isListening, setIsListening] = useState(false);
-    const [transcript, setTranscript] = useState("");
-    const [errorMsg, setErrorMsg] = useState("");
     const [commandTriggered, setCommandTriggered] = useState("");
-
-    const recognitionRef = useRef<any>(null);
-    const isActiveRef = useRef(false);
-    const restartTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-    const networkErrorCountRef = useRef(0);
-
-    // Detect browsers that lack Google's bundled speech API keys
-    const getBrowserWarning = (): string => {
-        if (typeof navigator === 'undefined') return '';
-        const ua = navigator.userAgent;
-        if (ua.includes('Vivaldi')) return 'Vivaldi does not support speech recognition — open in Google Chrome';
-        if (ua.includes('Firefox')) return 'Firefox does not support speech recognition — open in Google Chrome';
-        if (ua.includes('OPR') || ua.includes('Opera')) return 'Opera does not support speech recognition — open in Google Chrome';
-        return '';
-    };
+    const [isClient, setIsClient] = useState(false);
+    // Set on mount — UA-based detection runs only client-side
+    const [unsupportedMsg, setUnsupportedMsg] = useState("");
 
     useEffect(() => {
-        if (typeof window === "undefined") return;
-
-        const browserWarning = getBrowserWarning();
-        if (browserWarning) {
-            setErrorMsg(browserWarning);
-            return;
+        setIsClient(true);
+        const ua = navigator.userAgent;
+        // Vivaldi and plain Chromium on Linux ship without Google's speech API keys.
+        // They expose the API but it fails with "network" on every call.
+        if (ua.includes('Vivaldi')) {
+            setUnsupportedMsg('Voice requires Google Chrome — not supported in Vivaldi');
+        } else if (ua.includes('Firefox') && !ua.includes('Chrome')) {
+            setUnsupportedMsg('Voice requires Google Chrome — not supported in Firefox');
         }
-
-        const SpeechRecognition =
-            (window as any).SpeechRecognition ||
-            (window as any).webkitSpeechRecognition;
-
-        if (!SpeechRecognition) {
-            setErrorMsg("Speech API not supported — use Google Chrome");
-            return;
-        }
-
-        const recognition = new SpeechRecognition();
-        recognition.continuous = true;
-        recognition.interimResults = true;
-        recognition.lang = 'en-US';
-
-        recognition.onstart = () => {
-            setIsListening(true);
-            setErrorMsg("");
-            setTranscript("Listening…");
-        };
-
-        recognition.onend = () => {
-            if (isActiveRef.current) {
-                restartTimerRef.current = setTimeout(() => {
-                    if (!isActiveRef.current) return;
-                    try { recognition.start(); } catch (_) {}
-                }, 150);
-            }
-        };
-
-        recognition.onerror = (event: any) => {
-            const err: string = event.error;
-            const messages: Record<string, string> = {
-                'not-allowed':            'Mic permission denied — allow mic in browser settings',
-                'service-not-allowed':    'Speech service blocked — try Chrome browser',
-                'audio-capture':          'No microphone found',
-                'network':                '',
-                'no-speech':              '',
-                'aborted':                '',
-                'bad-grammar':            'Grammar error',
-                'language-not-supported': 'Language not supported',
-            };
-            const display = messages[err] ?? `Error: ${err}`;
-            if (display) setErrorMsg(display);
-
-            // Hard stop only for unrecoverable errors
-            if (err === 'not-allowed' || err === 'service-not-allowed' || err === 'audio-capture') {
-                isActiveRef.current = false;
-                setIsListening(false);
-                setTranscript("");
-                return;
-            }
-
-            // Network errors: count them. After 5 with no results, it's likely
-            // a browser API keys issue (Chromium without Google keys) — stop and advise.
-            if (err === 'network') {
-                networkErrorCountRef.current += 1;
-                if (networkErrorCountRef.current >= 5) {
-                    isActiveRef.current = false;
-                    setIsListening(false);
-                    setTranscript("");
-                    setErrorMsg('Requires Google Chrome — open site in Chrome to use voice');
-                }
-            }
-            // no-speech and aborted are truly transient — onend restarts silently
-        };
-
-        recognition.onresult = (event: any) => {
-            networkErrorCountRef.current = 0;
-            setErrorMsg("");
-            const result = event.results[event.results.length - 1];
-            const text = result[0].transcript.toLowerCase().trim();
-            setTranscript(text);
-            if (result.isFinal) {
-                processCommand(text);
-            }
-        };
-
-        recognitionRef.current = recognition;
-
-        return () => {
-            isActiveRef.current = false;
-            if (restartTimerRef.current) clearTimeout(restartTimerRef.current);
-            try { recognition.abort(); } catch (_) {}
-        };
     }, []);
-
-    const stopListening = () => {
-        isActiveRef.current = false;
-        networkErrorCountRef.current = 0;
-        if (restartTimerRef.current) clearTimeout(restartTimerRef.current);
-        setIsListening(false);
-        setTranscript("");
-        setErrorMsg("");
-        try { recognitionRef.current?.abort(); } catch (_) {}
-    };
-
-    const processCommand = (text: string) => {
-        if (text.includes('scroll') && text.includes('down')) {
-            triggerVisual('Scrolling Down');
-            window.scrollBy({ top: 600, behavior: 'smooth' });
-        } else if (text.includes('scroll') && text.includes('up')) {
-            triggerVisual('Scrolling Up');
-            window.scrollBy({ top: -600, behavior: 'smooth' });
-        } else if (text.includes('go home') || text.includes('home page') || text.includes('go to home')) {
-            triggerVisual('Opening Home');
-            router.push('/');
-        } else if (text.includes('explore') || text.includes('venues')) {
-            triggerVisual('Opening Explore');
-            router.push('/explore');
-        } else if (text.includes('training') || text.includes('academy')) {
-            triggerVisual('Opening Training');
-            router.push('/training');
-        } else if (text.includes('innovation') || text.includes('tools')) {
-            triggerVisual('Opening Innovation');
-            router.push('/innovation');
-        } else if (text.includes('community') || text.includes('forum')) {
-            triggerVisual('Opening Community');
-            router.push('/community');
-        } else if (text.includes('news') || text.includes('updates')) {
-            triggerVisual('Opening News');
-            router.push('/news');
-        } else if (text.includes('contact')) {
-            triggerVisual('Opening Contact');
-            router.push('/contact');
-        } else if (text.includes('login') || text.includes('sign in')) {
-            triggerVisual('Opening Login');
-            router.push('/login');
-        } else if (text.includes('dashboard')) {
-            triggerVisual('Opening Dashboard');
-            router.push('/dashboard');
-        }
-    };
 
     const triggerVisual = (msg: string) => {
         setCommandTriggered(msg);
         setTimeout(() => setCommandTriggered(""), 2500);
     };
 
-    const toggleListening = () => {
-        if (!recognitionRef.current) return;
-        if (isActiveRef.current) {
-            stopListening();
+    const nav = (path: string, label: string) => {
+        triggerVisual(label);
+        router.push(path);
+    };
+
+    // react-speech-recognition command list — isFuzzyMatch means partial phrase matching
+    const commands = [
+        { command: ['scroll down', 'go down', 'move down'], callback: () => { triggerVisual('Scrolling Down'); window.scrollBy({ top: 600, behavior: 'smooth' }); }, isFuzzyMatch: true },
+        { command: ['scroll up', 'go up', 'move up'],       callback: () => { triggerVisual('Scrolling Up');   window.scrollBy({ top: -600, behavior: 'smooth' }); }, isFuzzyMatch: true },
+        { command: ['go home', 'home page', 'go to home', 'home'],    callback: () => nav('/', 'Opening Home'),         isFuzzyMatch: true },
+        { command: ['explore', 'explore venues', 'venues'],            callback: () => nav('/explore', 'Opening Explore'), isFuzzyMatch: true },
+        { command: ['training', 'training academy', 'academy'],        callback: () => nav('/training', 'Opening Training'), isFuzzyMatch: true },
+        { command: ['innovation', 'innovation hub', 'tools'],          callback: () => nav('/innovation', 'Opening Innovation'), isFuzzyMatch: true },
+        { command: ['community', 'community forum', 'forum'],          callback: () => nav('/community', 'Opening Community'), isFuzzyMatch: true },
+        { command: ['news', 'latest news', 'updates'],                 callback: () => nav('/news', 'Opening News'),     isFuzzyMatch: true },
+        { command: ['contact', 'contact us'],                          callback: () => nav('/contact', 'Opening Contact'), isFuzzyMatch: true },
+        { command: ['login', 'sign in', 'log in'],                     callback: () => nav('/login', 'Opening Login'),   isFuzzyMatch: true },
+        { command: ['dashboard', 'my dashboard'],                      callback: () => nav('/dashboard', 'Opening Dashboard'), isFuzzyMatch: true },
+    ];
+
+    const { transcript, listening, browserSupportsSpeechRecognition } = useSpeechRecognition({ commands });
+
+    // Don't render anything server-side (Speech API is browser-only)
+    if (!isClient) return null;
+
+    const errorMsg = unsupportedMsg || (!browserSupportsSpeechRecognition ? 'Voice requires Google Chrome' : '');
+    const isDisabled = !!errorMsg;
+
+    const toggle = () => {
+        if (isDisabled) return;
+        if (listening) {
+            SpeechRecognition.stopListening();
         } else {
-            networkErrorCountRef.current = 0;
-            isActiveRef.current = true;
-            setIsListening(true);
-            setTranscript("Starting…");
-            setErrorMsg("");
-            try { recognitionRef.current.start(); } catch (_) {}
+            SpeechRecognition.startListening({ continuous: true, language: 'en-US' });
         }
     };
 
@@ -200,29 +79,36 @@ export default function VoiceController() {
 
             {/* MIC BUTTON */}
             <button
-                onClick={toggleListening}
-                className={`fixed bottom-6 right-6 z-[90] transition-all duration-300 hover:scale-105 border border-white/10 text-white px-5 py-3 rounded-full flex items-center gap-4 shadow-2xl cursor-pointer ${isListening ? 'bg-hotel-black' : 'bg-stone-800'}`}
+                onClick={toggle}
+                disabled={isDisabled}
+                className={`fixed bottom-6 right-6 z-[90] transition-all duration-300 border border-white/10 text-white px-5 py-3 rounded-full flex items-center gap-4 shadow-2xl
+                    ${isDisabled ? 'bg-stone-900 cursor-not-allowed opacity-80' : listening ? 'bg-hotel-black hover:scale-105 cursor-pointer' : 'bg-stone-800 hover:scale-105 cursor-pointer'}`}
                 aria-label="Voice Commands"
             >
-                <div className={`w-3 h-3 rounded-full flex-shrink-0 ${isListening ? 'bg-green-500 animate-pulse' : errorMsg ? 'bg-yellow-400' : 'bg-red-500'}`} />
+                {/* Status dot */}
+                <div className={`w-3 h-3 rounded-full flex-shrink-0
+                    ${isDisabled ? 'bg-gray-600' : listening ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`}
+                />
 
-                <div className="hidden sm:flex flex-col items-start w-40">
+                {/* Text panel — desktop only */}
+                <div className="hidden sm:flex flex-col items-start w-44">
                     <span className="text-[9px] uppercase tracking-widest text-gray-400 font-bold mb-1">
-                        {isListening ? 'Voice Active' : 'Voice Off'}
+                        {isDisabled ? 'Not Available' : listening ? 'Voice Active' : 'Voice Off'}
                     </span>
                     {errorMsg ? (
                         <span className="text-[10px] text-yellow-400 leading-tight">{errorMsg}</span>
                     ) : (
-                        <span className={`text-xs font-serif truncate w-full ${isListening ? 'text-hotel-bronze' : 'text-gray-400'}`}>
-                            {isListening ? (transcript || 'Listening…') : 'Click mic to start'}
+                        <span className={`text-xs font-serif truncate w-full ${listening ? 'text-hotel-bronze' : 'text-gray-400'}`}>
+                            {listening ? (transcript || 'Listening…') : 'Click mic to start'}
                         </span>
                     )}
                 </div>
 
-                {isListening
-                    ? <Activity size={18} className="text-hotel-bronze hidden sm:block" />
-                    : errorMsg
-                        ? <AlertCircle size={18} className="text-yellow-400 hidden sm:block" />
+                {/* Icon */}
+                {isDisabled
+                    ? <AlertCircle size={18} className="text-yellow-400 hidden sm:block" />
+                    : listening
+                        ? <Activity size={18} className="text-hotel-bronze hidden sm:block" />
                         : <MicOff size={18} className="text-gray-500 hidden sm:block" />
                 }
                 <Mic size={20} className="sm:hidden text-white" />
