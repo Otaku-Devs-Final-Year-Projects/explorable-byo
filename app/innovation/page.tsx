@@ -1,10 +1,11 @@
 "use client";
 
 import Link from 'next/link';
-import { Lightbulb, Wrench, Download, Play, FileText, ChevronRight, Check } from 'lucide-react';
+import { Lightbulb, Wrench, Download, Play, FileText, ChevronRight, Check, Lock } from 'lucide-react';
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
+import LoginGate from '../components/ui/LoginGate';
 
 export default function InnovationPage() {
     const mockTechnologies = [
@@ -33,10 +34,21 @@ export default function InnovationPage() {
 
     const [technologies, setTechnologies] = useState(mockTechnologies);
     const [loading, setLoading] = useState(true);
+    const [notLoggedIn, setNotLoggedIn] = useState(false);
+    const [isGuestBlocked, setIsGuestBlocked] = useState(false);
 
     useEffect(() => {
         const fetchTech = async () => {
             try {
+                // Auth check — innovation is partner/admin only
+                const { data: { session } } = await supabase.auth.getSession();
+                if (!session?.user) { setNotLoggedIn(true); setLoading(false); return; }
+                const { data: profile } = await supabase
+                    .from('profiles').select('role').eq('id', session.user.id).single();
+                if (profile?.role !== 'partner' && profile?.role !== 'admin') {
+                    setIsGuestBlocked(true); setLoading(false); return;
+                }
+
                 const { data, error } = await supabase.from('innovation_tools').select('*');
                 if (error) throw error;
                 if (data && data.length > 0) {
@@ -56,6 +68,34 @@ export default function InnovationPage() {
         };
         fetchTech();
     }, []);
+
+    if (loading) return <div className="min-h-screen bg-hotel-cream flex items-center justify-center text-hotel-bronze">Loading...</div>;
+
+    if (notLoggedIn) return (
+        <LoginGate
+            message="Please log in to access the Innovation Hub."
+            subMessage="This section is available to Hotel Partners and Admins."
+        />
+    );
+
+    if (isGuestBlocked) return (
+        <div className="min-h-screen bg-hotel-cream flex items-center justify-center px-6">
+            <div className="bg-white border border-hotel-sand shadow-md p-10 max-w-md w-full text-center">
+                <div className="w-16 h-16 bg-hotel-black rounded-full flex items-center justify-center mx-auto mb-6">
+                    <Lock size={28} className="text-hotel-bronze" />
+                </div>
+                <h2 className="font-serif text-2xl text-hotel-black mb-3">Partner Access Only</h2>
+                <p className="text-gray-500 text-sm font-light mb-2">The Innovation Hub is designed for hotel and venue partners.</p>
+                <p className="text-gray-400 text-xs font-light mb-6">Sign up as a Hotel Partner to explore accessible tech tools, guides, and resources for your property.</p>
+                <a href="/explore" className="inline-block bg-hotel-black text-white px-8 py-3 text-xs uppercase tracking-widest font-bold hover:bg-hotel-bronze transition-colors">
+                    Explore Accessible Venues
+                </a>
+                <div className="mt-4">
+                    <a href="/signup" className="text-xs text-gray-400 hover:text-hotel-bronze transition-colors font-bold underline">Upgrade to Partner Account</a>
+                </div>
+            </div>
+        </div>
+    );
 
     return (
         <div className="min-h-screen bg-[#FAF8F5] text-stone-800 font-sans selection:bg-stone-800 selection:text-white pb-32">

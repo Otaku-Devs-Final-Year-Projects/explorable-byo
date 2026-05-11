@@ -56,6 +56,7 @@ export default function TrainingModulePage() {
 
     const [loading, setLoading] = useState(true);
     const [notLoggedIn, setNotLoggedIn] = useState(false);
+    const [isGuestBlocked, setIsGuestBlocked] = useState(false);
     const [currentUser, setCurrentUser] = useState<any>(null);
     const [userProgress, setUserProgress] = useState<Record<string, string>>({});
     const [completing, setCompleting] = useState(false);
@@ -68,6 +69,13 @@ export default function TrainingModulePage() {
             const { data: { session } } = await supabase.auth.getSession();
             if (!session?.user) { setNotLoggedIn(true); setLoading(false); return; }
             setCurrentUser(session.user);
+
+            // Role check — training is partner/admin only
+            const { data: profile } = await supabase
+                .from('profiles').select('role').eq('id', session.user.id).single();
+            if (profile?.role !== 'partner' && profile?.role !== 'admin') {
+                setIsGuestBlocked(true); setLoading(false); return;
+            }
 
             // Load from localStorage first — works even without DB table
             const localKey = `training_progress_${session.user.id}`;
@@ -131,6 +139,25 @@ export default function TrainingModulePage() {
             message="Please log in to access the Training Academy."
             subMessage="Track your progress, complete modules, and earn your certificate."
         />
+    );
+
+    if (isGuestBlocked) return (
+        <div className="min-h-screen bg-hotel-cream flex items-center justify-center px-6">
+            <div className="bg-white border border-hotel-sand shadow-md p-10 max-w-md w-full text-center">
+                <div className="w-16 h-16 bg-hotel-black rounded-full flex items-center justify-center mx-auto mb-6">
+                    <Lock size={28} className="text-hotel-bronze" />
+                </div>
+                <h2 className="font-serif text-2xl text-hotel-black mb-3">Partner Access Only</h2>
+                <p className="text-gray-500 text-sm font-light mb-2">The Training Academy is designed for hotel staff and venue partners.</p>
+                <p className="text-gray-400 text-xs font-light mb-6">Sign up as a Hotel Partner to unlock training modules and earn the ExplorAble certificate.</p>
+                <a href="/explore" className="inline-block bg-hotel-black text-white px-8 py-3 text-xs uppercase tracking-widest font-bold hover:bg-hotel-bronze transition-colors">
+                    Explore Venues Instead
+                </a>
+                <div className="mt-4">
+                    <a href="/signup" className="text-xs text-gray-400 hover:text-hotel-bronze transition-colors font-bold underline">Upgrade to Partner Account</a>
+                </div>
+            </div>
+        </div>
     );
 
     if (loading) return (

@@ -12,6 +12,7 @@ export default function Navbar() {
     const [isScrolled, setIsScrolled] = useState(false);
     const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [userName, setUserName] = useState('');
+    const [userRole, setUserRole] = useState<string>('public');
 
     // Close mobile menu on route change
     useEffect(() => {
@@ -29,13 +30,21 @@ export default function Navbar() {
 
     // Check auth
     useEffect(() => {
+        const fetchRole = async (userId: string) => {
+            const { data: profile } = await supabase
+                .from('profiles').select('role').eq('id', userId).single();
+            setUserRole(profile?.role || 'guest');
+        };
+
         const checkAuth = async () => {
             const { data: { session } } = await supabase.auth.getSession();
             if (session?.user) {
                 setIsLoggedIn(true);
                 setUserName(session.user.user_metadata?.full_name || session.user.email?.split('@')[0] || "User");
+                await fetchRole(session.user.id);
             } else {
                 setIsLoggedIn(false);
+                setUserRole('public');
             }
         };
         checkAuth();
@@ -44,22 +53,25 @@ export default function Navbar() {
             if (session?.user) {
                 setIsLoggedIn(true);
                 setUserName(session.user.user_metadata?.full_name || session.user.email?.split('@')[0] || "User");
+                fetchRole(session.user.id);
             } else {
                 setIsLoggedIn(false);
+                setUserRole('public');
             }
         });
 
         return () => subscription.unsubscribe();
     }, [pathname]); // Re-check on nav in case of login/logout
 
-    const links = [
-        { label: 'Explore', href: '/explore' },
-        { label: 'Community', href: '/community' },
-        { label: 'Training', href: '/training' },
-        { label: 'Innovation', href: '/innovation' },
-        { label: 'News', href: '/news' },
-        { label: 'Contact', href: '/contact' },
+    const allLinks = [
+        { label: 'Explore', href: '/explore', roles: ['public', 'guest', 'partner', 'admin'] },
+        { label: 'Community', href: '/community', roles: ['guest', 'partner', 'admin'] },
+        { label: 'Training', href: '/training', roles: ['partner', 'admin'] },
+        { label: 'Innovation', href: '/innovation', roles: ['partner', 'admin'] },
+        { label: 'News', href: '/news', roles: ['public', 'guest', 'partner', 'admin'] },
+        { label: 'Contact', href: '/contact', roles: ['public', 'guest', 'partner', 'admin'] },
     ];
+    const links = allLinks.filter(l => l.roles.includes(userRole));
 
     const isHome = pathname === '/';
 

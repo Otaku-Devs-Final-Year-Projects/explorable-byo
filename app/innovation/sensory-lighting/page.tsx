@@ -2,9 +2,36 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { ArrowLeft, Check } from 'lucide-react';
+import { ArrowLeft, Check, Lock } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { supabase } from '../../lib/supabase';
+import LoginGate from '../../components/ui/LoginGate';
 
 export default function SensoryLightingPage() {
+    const [authState, setAuthState] = useState<'loading' | 'ok' | 'login' | 'blocked'>('loading');
+
+    useEffect(() => {
+        supabase.auth.getSession().then(async ({ data: { session } }) => {
+            if (!session?.user) { setAuthState('login'); return; }
+            const { data: profile } = await supabase.from('profiles').select('role').eq('id', session.user.id).single();
+            setAuthState(profile?.role === 'partner' || profile?.role === 'admin' ? 'ok' : 'blocked');
+        });
+    }, []);
+
+    if (authState === 'loading') return <div className="min-h-screen bg-hotel-cream flex items-center justify-center text-hotel-bronze">Loading...</div>;
+    if (authState === 'login') return <LoginGate message="Please log in to access the Innovation Hub." subMessage="This section is available to Hotel Partners." />;
+    if (authState === 'blocked') return (
+        <div className="min-h-screen bg-hotel-cream flex items-center justify-center px-6">
+            <div className="bg-white border border-hotel-sand shadow-md p-10 max-w-md w-full text-center">
+                <div className="w-16 h-16 bg-hotel-black rounded-full flex items-center justify-center mx-auto mb-6"><Lock size={28} className="text-hotel-bronze" /></div>
+                <h2 className="font-serif text-2xl text-hotel-black mb-3">Partner Access Only</h2>
+                <p className="text-gray-500 text-sm font-light mb-6">The Innovation Hub is designed for hotel and venue partners.</p>
+                <a href="/explore" className="inline-block bg-hotel-black text-white px-8 py-3 text-xs uppercase tracking-widest font-bold hover:bg-hotel-bronze transition-colors">Explore Venues Instead</a>
+                <div className="mt-4"><a href="/signup" className="text-xs text-gray-400 hover:text-hotel-bronze font-bold underline">Upgrade to Partner Account</a></div>
+            </div>
+        </div>
+    );
+
     return (
         <div className="min-h-screen bg-[#FAF8F5] text-stone-800 font-sans pb-32">
 

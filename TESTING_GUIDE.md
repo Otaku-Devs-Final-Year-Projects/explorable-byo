@@ -29,9 +29,46 @@
 
 ---
 
+## Role Access Matrix
+
+This table defines exactly which pages each role can access. These access rules are enforced both in the navbar (links are hidden for unauthorised roles) and at the page level (blocked users see a gate screen).
+
+| Page / Route | Public (no login) | Guest | Partner | Admin |
+|---|:---:|:---:|:---:|:---:|
+| `/` (Homepage) | ✅ | ✅ | ✅ | ✅ |
+| `/explore` | ✅ | ✅ | ✅ | ✅ |
+| `/explore/[slug]` | ✅ (view only) | ✅ | ✅ | ✅ |
+| `/news` | ✅ | ✅ | ✅ | ✅ |
+| `/news/[slug]` | ✅ | ✅ | ✅ | ✅ |
+| `/contact` | ✅ | ✅ | ✅ | ✅ |
+| `/login` | ✅ | ✅ | ✅ | ✅ |
+| `/signup` | ✅ | ✅ | ✅ | ✅ |
+| `/community` | ❌ login required | ✅ (post/reply) | ✅ | ✅ |
+| `/community/[id]` | ❌ login required | ✅ (reply) | ✅ | ✅ |
+| `/dashboard` | ❌ | ✅ (guest view) | ✅ (partner view) | ✅ |
+| `/training` | ❌ | ❌ partner only | ✅ | ✅ |
+| `/training/[id]` | ❌ | ❌ partner only | ✅ | ✅ |
+| `/training/certificate` | ❌ | ❌ partner only | ✅ (all modules complete) | ✅ |
+| `/innovation` | ❌ | ❌ partner only | ✅ | ✅ |
+| `/innovation/*` | ❌ | ❌ partner only | ✅ | ✅ |
+| `/admin` | ❌ | ❌ | ❌ | ✅ |
+
+**Navbar link visibility by role:**
+
+| Nav Link | Public | Guest | Partner | Admin |
+|---|:---:|:---:|:---:|:---:|
+| Explore | ✅ | ✅ | ✅ | ✅ |
+| Community | ❌ | ✅ | ✅ | ✅ |
+| Training | ❌ | ❌ | ✅ | ✅ |
+| Innovation | ❌ | ❌ | ✅ | ✅ |
+| News | ✅ | ✅ | ✅ | ✅ |
+| Contact | ✅ | ✅ | ✅ | ✅ |
+
+---
+
 ## Section 1 — Public Pages (No Login Required)
 
-These pages should be accessible to any visitor without an account.
+These pages are accessible to any visitor without an account. The navbar shows: **Explore**, **News**, **Contact**, and **Login** only — Community, Training, and Innovation are hidden until the user logs in.
 
 ---
 
@@ -44,7 +81,7 @@ These pages should be accessible to any visitor without an account.
 | 3 | Scroll down | Feature highlights section visible (accessibility icons, stats) |
 | 4 | Click **Explore Venues** CTA button | Navigates to `/explore` |
 | 5 | Click **Partner With Us** button (if visible) | Navigates to `/login` or `/contact` |
-| 6 | Check the Navbar | Links visible: Home, Explore, Community, Training, Innovation, News, Login |
+| 6 | Check the Navbar | Links visible: **Explore**, **News**, **Contact**, **Login** — Community, Training, Innovation are hidden for public users |
 | 7 | Check bottom-right corner | Floating voice button visible (mic icon with label "Voice Off") |
 
 ---
@@ -87,37 +124,41 @@ These pages should be accessible to any visitor without an account.
 
 ---
 
-### 1.5 Innovation Hub (`/innovation`)
+### 1.5 Innovation Hub (`/innovation`) — Partner/Admin Only
+
+> This page is **not accessible to public or guest users**. Visiting `/innovation` without logging in — or while logged in as a guest — shows a "Partner Access Only" gate screen.
 
 | # | Action | Expected Result |
 |---|---|---|
-| 1 | Navigate to `/innovation` | Cards of innovation tools/assistive tech load |
-| 2 | Check card content | Each card shows title, description, and feature list |
-| 3 | Check image rendering | Tool images display without broken links |
-| 4 | Click **Watch on YouTube** (Eco-Ramp video card) | Opens a YouTube search for wheelchair ramp installation in a new tab |
-| 5 | Click **View & Download Guide** (Audio QR PDF card) | Opens `/innovation/guide` in a new tab — a full printable setup guide |
-| 6 | On the guide page, click **Save as PDF** | Browser print dialog opens; guide can be saved as PDF |
+| 1 | Visit `/innovation` while **not logged in** | "Login Required" gate screen is displayed (not the innovation content) |
+| 2 | Visit `/innovation` while logged in as a **Guest** | "Partner Access Only" gate screen is displayed with a link to `/explore` and `/signup` |
+| 3 | Check that the **Innovation** nav link is hidden | For public and guest users, the Innovation link does not appear in the navbar |
+| 4 | *(Partner test — see Section 3.3)* Log in as a partner and navigate to `/innovation` | Innovation Hub loads with technology cards |
 
 ---
 
-### 1.6 Community Forum (`/community`)
+### 1.6 Community Forum (`/community`) — Login Required
+
+> The Community section requires users to be **logged in**. Public visitors are redirected to a login gate. Guest and Partner users can both post and reply.
 
 | # | Action | Expected Result |
 |---|---|---|
-| 1 | Navigate to `/community` | Page loads with discussion posts from Supabase + sidebar with top-rated venues |
-| 2 | Browse posts | Each post shows author, tag, title, like count, and reply count |
-| 3 | Click a post title | Navigates to `/community/[id]` (thread detail page) |
-| 4 | Try to post **without logging in** | "New Post" form is hidden or shows a "Log in to join the discussion" message |
+| 1 | Visit `/community` while **not logged in** | Login gate is displayed — community content is not shown |
+| 2 | Check the navbar as a public user | **Community** link is hidden from the navbar |
+| 3 | *(Guest/Partner test — see Section 2.4)* Log in and navigate to `/community` | Page loads with discussion posts and "New Post" form |
 
 ---
 
-### 1.7 Training Academy (`/training`)
+### 1.7 Training Academy (`/training`) — Partner/Admin Only
+
+> This page is **not accessible to public or guest users**. Visiting `/training` without logging in shows a "Login Required" gate; visiting as a guest shows a "Partner Access Only" gate.
 
 | # | Action | Expected Result |
 |---|---|---|
-| 1 | Navigate to `/training` | Three module cards visible: Module 1, 2, 3 |
-| 2 | Check module status without login | All modules show as locked or prompt to log in |
-| 3 | Click a module card without login | Redirected to `/login` or prompt shown |
+| 1 | Visit `/training` while **not logged in** | "Login Required" gate screen is displayed |
+| 2 | Visit `/training` while logged in as a **Guest** | "Partner Access Only" gate screen is displayed |
+| 3 | Check that the **Training** nav link is hidden | For public and guest users, the Training link does not appear in the navbar |
+| 4 | *(Partner test — see Section 3.3)* Log in as a partner and navigate to `/training` | Training Academy loads with module cards |
 
 ---
 
@@ -150,6 +191,10 @@ These pages should be accessible to any visitor without an account.
 
 **Login as**: g1@demo.com / password123  
 **Starting point after login**: `/dashboard`
+
+> **Guest role access**: Explore, Community (post/reply), News, Contact, Dashboard, Bookings, Saved Venues.  
+> **Not accessible**: Training, Innovation (partner-only sections).  
+> **Navbar links visible**: Explore, Community, News, Contact.
 
 ---
 
@@ -195,6 +240,8 @@ These pages should be accessible to any visitor without an account.
 
 ### 2.4 Community Forum — Posting & Replying (Guest)
 
+> Guests have full Community access. The **Community** nav link appears in the navbar after login.
+
 | # | Action | Expected Result |
 |---|---|---|
 | 1 | Navigate to `/community` while logged in | "New Post" form is visible at the top |
@@ -212,23 +259,16 @@ These pages should be accessible to any visitor without an account.
 
 ---
 
-### 2.5 Training Academy (Guest, logged in)
+### 2.5 Training Academy Access — Blocked for Guests
+
+> Training is **not available** to guest accounts. This section verifies the access gate works correctly.
 
 | # | Action | Expected Result |
 |---|---|---|
-| 1 | Navigate to `/training` | Module 1 is **unlocked** (clickable); Modules 2 and 3 are **locked** |
-| 2 | Click **Module 1: Foundations of Awareness** | Navigates to `/training/1`, full module content loads |
-| 3 | Read through the module content | 5 paragraphs of educational content visible |
-| 4 | Click **Mark as Complete** | Button changes to "Completed ✓" immediately; progress bar updates |
-| 5 | Navigate back to `/training` | Module 1 shows as **Completed** (green badge); Module 2 is now **unlocked** |
-| 6 | Refresh the page | Module 1 still shows as completed (progress saved in localStorage) |
-| 7 | Complete Module 2 (`/training/2`) | Module 2 marked complete; Module 3 unlocks |
-| 8 | Complete Module 3 (`/training/3`) | All modules complete; certificate banner appears |
-| 9 | Click **Next Module** button after completing Module 1 | Navigates directly to Module 2 |
-| 10 | Click the **certificate** link | Navigates to `/training/certificate` |
-| 11 | On the certificate page | Certificate renders with user name, completion date, all 3 module names, and two signature lines |
-| 12 | Click **Download / Print Certificate** | Browser print dialog opens (PDF save is possible via print dialog) |
-| 13 | Try visiting `/training/2` without completing Module 1 | Page shows "Module Locked" message |
+| 1 | While logged in as a guest, navigate to `/training` directly (type URL) | "Partner Access Only" gate screen is displayed — not module content |
+| 2 | Note the gate screen | Shows "Partner Access Only" heading, brief explanation, "Explore Venues Instead" button, and "Upgrade to Partner Account" link |
+| 3 | Check the navbar | **Training** and **Innovation** links are **not visible** in the navbar for guest accounts |
+| 4 | Navigate to `/training/1` directly | Same "Partner Access Only" gate screen |
 
 ---
 
@@ -236,6 +276,9 @@ These pages should be accessible to any visitor without an account.
 
 **Login as**: p1@demo.com / password123  
 **Prerequisite**: A venue in the `venues` table must have `owner_id` set to this user's UUID.
+
+> **Partner role access**: Everything a guest can access, plus **Training Academy** and **Innovation Hub**.  
+> **Navbar links visible**: Explore, Community, Training, Innovation, News, Contact.
 
 ---
 
@@ -279,6 +322,40 @@ These pages should be accessible to any visitor without an account.
 | 12 | Edit **Flooring Type** | Saves to `venue_specs` |
 | 13 | Click **Save All Changes** | All changes written to Supabase; toast/success message shown |
 | 14 | Navigate back and open the venue on `/explore/[id]` | Updated data is reflected on the public detail page |
+
+---
+
+### 3.3 Training Academy (`/training`) — Partner Access
+
+| # | Action | Expected Result |
+|---|---|---|
+| 1 | Log in as a partner and navigate to `/training` | Training Academy loads — no gate screen |
+| 2 | Check the navbar | **Training** and **Innovation** links are now visible |
+| 3 | Check module list | Module 1 is **unlocked**; Modules 2 and 3 are **locked** until previous is complete |
+| 4 | Click **Module 1: Foundations of Awareness** | Navigates to `/training/1`, full module content loads |
+| 5 | Click **Mark as Complete** | Button changes to "Completed ✓"; progress bar updates |
+| 6 | Navigate back to `/training` | Module 1 shows as **Completed** (green badge); Module 2 unlocks |
+| 7 | Refresh the page | Module 1 still shows as completed (progress saved in localStorage) |
+| 8 | Complete all 3 modules | Certificate banner appears; all modules show as completed |
+| 9 | Click **Next Module** button after completing a module | Navigates directly to the next module |
+| 10 | Navigate to `/training/certificate` | Certificate renders with user name, date, module list, and two signature lines |
+| 11 | Click **Download / Print Certificate** | Browser print dialog opens — can be saved as PDF |
+| 12 | Try visiting `/training/2` without completing Module 1 | "Module Locked" message displayed |
+
+---
+
+### 3.4 Innovation Hub (`/innovation`) — Partner Access
+
+| # | Action | Expected Result |
+|---|---|---|
+| 1 | Navigate to `/innovation` | Innovation Hub loads with three technology cards (Eco-Ramps, QR Code Signage, Sensory Lighting) |
+| 2 | Check card content | Each card shows title, description, and feature list |
+| 3 | Click **Watch on YouTube** (Eco-Ramp video card) | Opens a YouTube search for wheelchair ramp installation in a new tab |
+| 4 | Click **View & Download Guide** (Audio QR PDF card) | Opens `/innovation/guide` in a new tab — a full printable setup guide |
+| 5 | On the guide page, click **Save as PDF** | Browser print dialog opens; guide can be saved as PDF |
+| 6 | Click **Learn More** on Eco-Ramps card | Navigates to `/innovation/eco-ramps` — full detail page with specs, installation guide |
+| 7 | Click **Learn More** on QR Code Signage card | Navigates to `/innovation/audio-qr` — detail page with setup steps |
+| 8 | Click **Learn More** on Sensory Lighting card | Navigates to `/innovation/sensory-lighting` — detail page with lighting specs |
 
 ---
 
@@ -386,13 +463,18 @@ These tests verify Supabase Realtime subscriptions are working.
 | # | Scenario | Expected Result |
 |---|---|---|
 | 1 | Navigate to `/admin` as Guest | Redirected to `/explore` |
-| 2 | Navigate to `/dashboard/edit/[other-venue-id]` as a Partner | Access denied or redirect (auth guard checks `owner_id`) |
-| 3 | Navigate to `/training/2` without completing Module 1 | "Module Locked" message displayed |
-| 4 | Navigate to `/training/certificate` without completing all 3 modules | "Not Eligible" screen with link back to training |
-| 5 | Navigate to `/community/invalid-uuid` | Redirected to `/community` (post not found handler) |
-| 6 | Try to book more rooms than daily capacity | Fully booked dates appear greyed out in calendar |
-| 7 | Submit booking enquiry while not logged in | Prompt to log in shown; booking not submitted |
-| 8 | Open site in Firefox | Voice button still visible, but clicking it shows "Speech API Not Supported" in the transcript display |
+| 2 | Navigate to `/training` as Guest (logged in) | "Partner Access Only" gate displayed |
+| 3 | Navigate to `/innovation` as Guest (logged in) | "Partner Access Only" gate displayed |
+| 4 | Navigate to `/training` without logging in | "Login Required" gate displayed |
+| 5 | Navigate to `/innovation` without logging in | "Login Required" gate displayed |
+| 6 | Navigate to `/community` without logging in | Login gate displayed |
+| 7 | Navigate to `/dashboard/edit/[other-venue-id]` as a Partner | Access denied or redirect (auth guard checks `owner_id`) |
+| 8 | Navigate to `/training/2` without completing Module 1 | "Module Locked" message displayed |
+| 9 | Navigate to `/training/certificate` without completing all 3 modules | "Not Eligible" screen with link back to training |
+| 10 | Navigate to `/community/invalid-uuid` | Redirected to `/community` (post not found handler) |
+| 11 | Try to book more rooms than daily capacity | Fully booked dates appear greyed out in calendar |
+| 12 | Submit booking enquiry while not logged in | Prompt to log in shown; booking not submitted |
+| 13 | Open site in Firefox | Voice button still visible, but clicking it shows "Speech API Not Supported" in the transcript display |
 
 ---
 
@@ -403,23 +485,24 @@ These tests verify Supabase Realtime subscriptions are working.
 | `/` | Public | Homepage / hero |
 | `/explore` | Public | Venue search and filter grid |
 | `/explore/[slug]` | Public (booking requires auth) | Venue detail + booking calendar |
-| `/community` | Public (post requires auth) | Forum feed with inline reply previews |
-| `/community/[id]` | Public (reply requires auth) | Individual thread + replies |
-| `/training` | Auth required | Module list with progress |
-| `/training/[id]` | Auth required | Individual module content |
-| `/training/certificate` | Auth required (all modules complete) | Printable certificate |
-| `/innovation` | Public | Assistive tech showcase + resource links |
-| `/innovation/guide` | Public | Printable Audio QR Code Setup Guide |
+| `/community` | **Login required** (Guest+) | Forum feed with inline reply previews |
+| `/community/[id]` | **Login required** (Guest+) | Individual thread + replies |
+| `/training` | **Partner/Admin only** | Module list with progress |
+| `/training/[id]` | **Partner/Admin only** | Individual module content |
+| `/training/certificate` | **Partner/Admin only** (all modules complete) | Printable certificate |
+| `/innovation` | **Partner/Admin only** | Assistive tech showcase + resource links |
+| `/innovation/eco-ramps` | **Partner/Admin only** | Eco-Ramps detail page |
+| `/innovation/audio-qr` | **Partner/Admin only** | Audio QR Code Signage detail page |
+| `/innovation/sensory-lighting` | **Partner/Admin only** | Sensory-Friendly Lighting detail page |
+| `/innovation/guide` | **Partner/Admin only** | Printable Audio QR Code Setup Guide |
 | `/news` | Public | News articles grid |
 | `/news/[slug]` | Public | Full article page |
 | `/contact` | Public | Contact form |
 | `/login` | Public | Login form with quick demo fill buttons |
 | `/signup` | Public | Signup form (Guest or Partner) |
-| `/dashboard` | Auth required | Guest or Partner dashboard (role-based) |
-| `/dashboard/edit/[id]` | Partner only | Venue editing form |
-| `/admin` | Admin only | Admin portal (redirect to `/explore` otherwise) |
-| `/admin` | Admin only | Admin portal |
-| `/contact` | Public | Contact / enquiry form |
+| `/dashboard` | **Auth required** | Guest or Partner dashboard (role-based view) |
+| `/dashboard/edit/[id]` | **Partner only** | Venue editing form |
+| `/admin` | **Admin only** | Admin portal (redirects to `/explore` otherwise) |
 
 ---
 
