@@ -12,19 +12,22 @@ export default function InnovationPage() {
             title: "Eco-Ramps",
             description: "Low-cost, durable ramps made from recycled materials. Tested for safe gradients and weather resistance.",
             image: "https://images.unsplash.com/photo-1504328345606-18bbc8c9d7d1?auto=format&fit=crop&w=800&q=80",
-            features: ["Recycled Materials", "Weather Resistant", "Easy Installation"]
+            features: ["Recycled Materials", "Weather Resistant", "Easy Installation"],
+            slug: "eco-ramps"
         },
         {
             title: "QR Code Signage",
             description: "Audio-descriptive QR codes that can be placed on doors and menus to assist guests with visual impairments.",
             image: "https://images.unsplash.com/photo-1611532736597-de2d4265fba3?auto=format&fit=crop&w=800&q=80",
-            features: ["Audio Descriptions", "Multi-language", "Low Maintenance"]
+            features: ["Audio Descriptions", "Multi-language", "Low Maintenance"],
+            slug: "audio-qr"
         },
         {
             title: "Sensory-Friendly Lighting",
             description: "Adjustable warm lighting setups designed to reduce glare and accommodate guests with sensory sensitivities.",
             image: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?auto=format&fit=crop&w=800&q=80",
-            features: ["Dimmable", "Warm Tones", "Anti-Glare"]
+            features: ["Dimmable", "Warm Tones", "Anti-Glare"],
+            slug: "sensory-lighting"
         }
     ];
 
@@ -37,11 +40,12 @@ export default function InnovationPage() {
                 const { data, error } = await supabase.from('innovation_tools').select('*');
                 if (error) throw error;
                 if (data && data.length > 0) {
-                    setTechnologies(data.map(d => ({
+                    setTechnologies(data.map((d, idx) => ({
                         title: d.title,
                         description: d.description,
                         image: (d.image_url && !d.image_url.startsWith('data:')) ? d.image_url : (d.image || ''),
-                        features: d.features || []
+                        features: d.features || [],
+                        slug: ['eco-ramps', 'audio-qr', 'sensory-lighting'][idx] || `tool-${idx}`
                     })));
                 }
             } catch (err) {
@@ -104,9 +108,12 @@ export default function InnovationPage() {
                                         ))}
                                     </ul>
 
-                                    <button className="flex items-center text-xs uppercase tracking-widest font-bold text-stone-400 group-hover:text-[#C6A87C] transition-colors">
+                                    <Link
+                                        href={`/innovation/${(tech as any).slug || 'eco-ramps'}`}
+                                        className="flex items-center text-xs uppercase tracking-widest font-bold text-stone-400 group-hover:text-[#C6A87C] transition-colors"
+                                    >
                                         Learn More <ChevronRight size={14} className="ml-1" />
-                                    </button>
+                                    </Link>
                                 </div>
                             </div>
                         ))}
