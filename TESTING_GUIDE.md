@@ -61,16 +61,17 @@ These pages should be accessible to any visitor without an account.
 
 ---
 
-### 1.3 Venue Detail Page (`/explore/[id]`)
+### 1.3 Venue Detail Page (`/explore/[slug]`)
 
 | # | Action | Expected Result |
 |---|---|---|
 | 1 | Open a venue detail page | Full venue info loads: name, images, description, address, rating |
-| 2 | Check Accessibility Features section | Badges/icons for features like ramp, accessible bathroom, wide doors, etc. |
-| 3 | Check Technical Specs section | Door width, ramp gradient, flooring type displayed |
-| 4 | Click the **calendar** | Interactive booking calendar loads, past dates are greyed out |
-| 5 | Try to book **without being logged in** | A prompt appears: "Please log in to make a booking" |
-| 6 | Click **Save Venue** without being logged in | Redirected to login page or shown a login prompt |
+| 2 | Check the URL | URL uses a readable slug e.g. `/explore/bulawayo-rainbow-hotel`, not a UUID |
+| 3 | Check Accessibility Features section | Badges/icons for features like ramp, accessible bathroom, wide doors, etc. |
+| 4 | Check Technical Specs section | Door width, ramp gradient, flooring type displayed |
+| 5 | Click the **calendar** | Interactive booking calendar loads, past dates are greyed out |
+| 6 | Try to book **without being logged in** | A prompt appears: "Please log in to make a booking" |
+| 7 | Click **Save Venue** without being logged in | Redirected to login page or shown a login prompt |
 
 ---
 
@@ -80,8 +81,9 @@ These pages should be accessible to any visitor without an account.
 |---|---|---|
 | 1 | Navigate to `/news` | Grid of news articles loads from Supabase |
 | 2 | Check a featured article | Displayed prominently at top (if `is_featured = true`) |
-| 3 | Click an article card | Navigates to `/news/[id]` with full article content |
-| 4 | Navigate to `/news/[id]` directly | Article title, excerpt, category, and image render correctly |
+| 3 | Click an article card | Navigates to `/news/[slug]` (readable slug URL) with full article content |
+| 4 | Check the URL | URL uses a slug e.g. `/news/explorable-partners-with-zimbabwe-tourism-authority`, not a UUID |
+| 5 | Navigate to `/news/[slug]` directly | Article title, excerpt, category, and image render correctly |
 
 ---
 
@@ -92,6 +94,9 @@ These pages should be accessible to any visitor without an account.
 | 1 | Navigate to `/innovation` | Cards of innovation tools/assistive tech load |
 | 2 | Check card content | Each card shows title, description, and feature list |
 | 3 | Check image rendering | Tool images display without broken links |
+| 4 | Click **Watch on YouTube** (Eco-Ramp video card) | Opens a YouTube search for wheelchair ramp installation in a new tab |
+| 5 | Click **View & Download Guide** (Audio QR PDF card) | Opens `/innovation/guide` in a new tab — a full printable setup guide |
+| 6 | On the guide page, click **Save as PDF** | Browser print dialog opens; guide can be saved as PDF |
 
 ---
 
@@ -132,9 +137,12 @@ These pages should be accessible to any visitor without an account.
 | 1 | Navigate to `/login` | Login form loads with email + password fields |
 | 2 | Enter wrong credentials | Error message: "Invalid login credentials" |
 | 3 | Submit empty form | Validation error shown |
-| 4 | Navigate to `/signup` | Signup form loads: Full Name, Email, Password, Role selector (Guest / Partner) |
-| 5 | Create a new Guest account | Redirected to `/dashboard` after email confirmation (or immediately, depending on Supabase settings) |
-| 6 | Create a new Partner account | Redirected to `/dashboard` with Partner view |
+| 4 | Click **Guest** quick-fill button (below the form) | Email and password fields auto-fill with `g1@demo.com / password123` |
+| 5 | Click **Partner** quick-fill button | Fields auto-fill with `p1@demo.com / password123` |
+| 6 | After quick-fill, click **Secure Login** | Logs in successfully and redirects to `/dashboard` |
+| 7 | Navigate to `/signup` | Signup form loads: Full Name, Email, Password, Role selector (Guest / Partner) |
+| 8 | Create a new Guest account | Redirected to `/dashboard` after email confirmation (or immediately, depending on Supabase settings) |
+| 9 | Create a new Partner account | Redirected to `/dashboard` with Partner view |
 
 ---
 
@@ -192,11 +200,15 @@ These pages should be accessible to any visitor without an account.
 | 1 | Navigate to `/community` while logged in | "New Post" form is visible at the top |
 | 2 | Fill in post Title, Content, and select a Tag | Form accepts all input |
 | 3 | Click **Post** | New post appears at the top of the feed immediately (optimistic update) |
-| 4 | Click the post title | Navigates to `/community/[id]` thread page |
-| 5 | On the thread page, type a reply in the reply box | Text field accepts input |
-| 6 | Click **Post Reply** | Reply appears below the original post |
-| 7 | Click the **Helpful / Thumbs Up** button on the original post | Like count increments by 1 |
-| 8 | Open the same thread in another browser tab | New replies appear in real-time without refreshing (Supabase Realtime) |
+| 4 | On the feed, click the **replies count button** (speech bubble icon + number) on any post | An inline replies panel expands beneath the post card showing all replies |
+| 5 | If there are no replies | Panel shows "No replies yet. Be the first to reply →" link to the thread |
+| 6 | Click the replies count button again | Panel collapses |
+| 7 | Click the post title | Navigates to `/community/[id]` thread detail page |
+| 8 | On the thread page, type a reply in the reply box | Text field accepts input |
+| 9 | Click **Post Reply** | Reply appears immediately below the original post (optimistic update) |
+| 10 | Navigate back to `/community` and expand replies | The new reply count is reflected on the post card |
+| 11 | Click the **Helpful / Thumbs Up** button on the original post | Like count increments by 1 |
+| 12 | Open the same thread in another browser tab | New replies appear in real-time without refreshing (Supabase Realtime) |
 
 ---
 
@@ -207,14 +219,16 @@ These pages should be accessible to any visitor without an account.
 | 1 | Navigate to `/training` | Module 1 is **unlocked** (clickable); Modules 2 and 3 are **locked** |
 | 2 | Click **Module 1: Foundations of Awareness** | Navigates to `/training/1`, full module content loads |
 | 3 | Read through the module content | 5 paragraphs of educational content visible |
-| 4 | Click **Mark as Complete** | Button shows loading, then changes to "Completed ✓" |
+| 4 | Click **Mark as Complete** | Button changes to "Completed ✓" immediately; progress bar updates |
 | 5 | Navigate back to `/training` | Module 1 shows as **Completed** (green badge); Module 2 is now **unlocked** |
-| 6 | Complete Module 2 (`/training/2`) | Module 2 marked complete; Module 3 unlocks |
-| 7 | Complete Module 3 (`/training/3`) | All modules complete; certificate banner appears |
-| 8 | Click the **certificate** link | Navigates to `/training/certificate` |
-| 9 | On the certificate page | Certificate renders with user name, completion date, all 3 module names, and two signature lines |
-| 10 | Click **Download / Print Certificate** | Browser print dialog opens (PDF save is possible via print dialog) |
-| 11 | Try visiting `/training/2` without completing Module 1 | Page shows "Module Locked" message |
+| 6 | Refresh the page | Module 1 still shows as completed (progress saved in localStorage) |
+| 7 | Complete Module 2 (`/training/2`) | Module 2 marked complete; Module 3 unlocks |
+| 8 | Complete Module 3 (`/training/3`) | All modules complete; certificate banner appears |
+| 9 | Click **Next Module** button after completing Module 1 | Navigates directly to Module 2 |
+| 10 | Click the **certificate** link | Navigates to `/training/certificate` |
+| 11 | On the certificate page | Certificate renders with user name, completion date, all 3 module names, and two signature lines |
+| 12 | Click **Download / Print Certificate** | Browser print dialog opens (PDF save is possible via print dialog) |
+| 13 | Try visiting `/training/2` without completing Module 1 | Page shows "Module Locked" message |
 
 ---
 
@@ -332,7 +346,9 @@ These pages should be accessible to any visitor without an account.
 
 Voice navigation is available on **every page** via the floating button in the bottom-right corner.
 
-> **Browser**: Must use Chrome or Edge. Microphone permission must be granted.
+> **Browser**: Works on all Chromium-based browsers — Google Chrome, Microsoft Edge, Vivaldi, Brave, Arc. Safari has partial support. Firefox does not support the Web Speech API.
+> 
+> **Important**: If the microphone icon in your system taskbar flickers on/off, this is a known browser behaviour when the mic encounters a transient error. The voice system will stop automatically and show "Click mic to start" — simply click the button again to retry.
 
 | # | Voice Command to Say | Expected Result |
 |---|---|---|
@@ -346,8 +362,9 @@ Voice navigation is available on **every page** via the floating button in the b
 | 8 | Say **"login"** or **"partner"** | Navigates to `/login` |
 | 9 | Say **"scroll down"** | Page scrolls down 600px smoothly |
 | 10 | Say **"scroll up"** | Page scrolls up 600px smoothly |
-| 11 | Click the mic button again | Returns to red dot ("Voice Off"), listening stops |
-| 12 | Navigate to a new page | Voice button is present and functional on all pages (mounted in root layout) |
+| 11 | Stay silent for several seconds | Voice auto-restarts silently and keeps listening |
+| 12 | Click the mic button again | Returns to red dot ("Voice Off"), listening stops |
+| 13 | Navigate to a new page | Voice button is present and functional on all pages (mounted in root layout) |
 
 ---
 
@@ -385,19 +402,22 @@ These tests verify Supabase Realtime subscriptions are working.
 |---|---|---|
 | `/` | Public | Homepage / hero |
 | `/explore` | Public | Venue search and filter grid |
-| `/explore/[id]` | Public (booking requires auth) | Venue detail + booking calendar |
-| `/community` | Public (post requires auth) | Forum feed |
+| `/explore/[slug]` | Public (booking requires auth) | Venue detail + booking calendar |
+| `/community` | Public (post requires auth) | Forum feed with inline reply previews |
 | `/community/[id]` | Public (reply requires auth) | Individual thread + replies |
 | `/training` | Auth required | Module list with progress |
 | `/training/[id]` | Auth required | Individual module content |
 | `/training/certificate` | Auth required (all modules complete) | Printable certificate |
-| `/innovation` | Public | Assistive tech showcase |
+| `/innovation` | Public | Assistive tech showcase + resource links |
+| `/innovation/guide` | Public | Printable Audio QR Code Setup Guide |
 | `/news` | Public | News articles grid |
-| `/news/[id]` | Public | Full article page |
-| `/login` | Public | Login form |
+| `/news/[slug]` | Public | Full article page |
+| `/contact` | Public | Contact form |
+| `/login` | Public | Login form with quick demo fill buttons |
 | `/signup` | Public | Signup form (Guest or Partner) |
 | `/dashboard` | Auth required | Guest or Partner dashboard (role-based) |
 | `/dashboard/edit/[id]` | Partner only | Venue editing form |
+| `/admin` | Admin only | Admin portal (redirect to `/explore` otherwise) |
 | `/admin` | Admin only | Admin portal |
 | `/contact` | Public | Contact / enquiry form |
 
