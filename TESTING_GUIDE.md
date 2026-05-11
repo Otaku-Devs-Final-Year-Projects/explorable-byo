@@ -262,7 +262,7 @@ Navigate to https://explorable-byo.vercel.app/admin. The portal loads with 4 tab
 
 The floating mic button is in the bottom-right corner of every page.
 
-1. Click the mic button — it turns **green** and a transcript panel appears
+1. Click the mic button — the dot turns **green**, label says "Voice Active", and a transcript panel appears
 2. Speak these commands and confirm navigation:
 
 | Say this | Goes to |
@@ -277,10 +277,11 @@ The floating mic button is in the bottom-right corner of every page.
 | "scroll down" | Page scrolls down smoothly |
 | "scroll up" | Page scrolls up smoothly |
 
-3. Click the mic button again to turn it off (returns to red)
-4. Navigate to a different page — the mic button is present and functional on every page
+3. Click the mic button again — it turns **red** immediately and the label changes to "Voice Off". Voice stops responding.
+4. Repeat the on/off toggle rapidly several times — the button should respond correctly every time with no stuck-on state.
+5. Navigate to a different page — the mic button is present and functional on every page.
 
-> **Note**: If the mic icon in your taskbar flickers briefly and the voice stops, this is a browser behaviour on transient mic errors. Click the button once to restart.
+> **Toggle reliability fix**: The button now updates state immediately on click (no waiting for the browser recognition session to end), and uses `abort()` for a clean stop. If Chrome internally restarts the mic session in the background, the button stays green and continues working transparently.
 
 ---
 

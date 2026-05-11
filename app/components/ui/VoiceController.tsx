@@ -1,22 +1,22 @@
 "use client";
 
 import { useEffect, useState, useRef } from 'react';
-import { useRouter, usePathname } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { Mic, MicOff, Activity } from 'lucide-react';
 
 export default function VoiceController() {
     const router = useRouter();
-    const pathname = usePathname();
 
     const [isListening, setIsListening] = useState(false);
     const [transcriptDisplay, setTranscriptDisplay] = useState("Click mic to start");
     const [commandTriggered, setCommandTriggered] = useState("");
+
     const recognitionRef = useRef<any>(null);
-    // Tracks whether the user *wants* to be listening
-    const shouldListenRef = useRef(false);
-    // Set to true when an error fires; cleared on successful onstart.
-    // onend checks this — if true it does NOT restart (avoids mic hardware cycling).
-    const hadErrorRef = useRef(false);
+    // Source of truth: does the USER want recognition running?
+    // Using a ref avoids stale-closure bugs — always reflects current intent.
+    const isActiveRef = useRef(false);
+    // Timer handle for restart-after-natural-end cycles
+    const restartTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     // Initialize Speech Recognition once on mount
     useEffect(() => {
@@ -34,57 +34,43 @@ export default function VoiceController() {
         recognition.lang = 'en-US';
 
         recognition.onstart = () => {
-            hadErrorRef.current = false;
+            // Sync UI in case start() was called programmatically during a restart cycle
             setIsListening(true);
             setTranscriptDisplay("Listening...");
         };
 
         recognition.onend = () => {
-            // If an error just occurred, do NOT restart — it would cause rapid
-            // mic hardware cycling (visible as the mic icon flashing in the taskbar).
-            // The user must click the button again to retry.
-            if (hadErrorRef.current) {
-                shouldListenRef.current = false;
-                setIsListening(false);
-                setTranscriptDisplay("Click mic to start");
-                return;
+            // If user still wants recognition on, restart silently.
+            // Do NOT touch isListening here — the UI already reflects the desired state
+            // and any state flip here would cause the icon to flicker.
+            if (isActiveRef.current) {
+                restartTimerRef.current = setTimeout(() => {
+                    if (!isActiveRef.current) return;
+                    try { recognition.start(); } catch (_) { /* already starting */ }
+                }, 100);
             }
-            // Clean end (silence timeout with continuous=true) — safe to restart.
-            if (shouldListenRef.current) {
-                setTimeout(() => {
-                    if (!shouldListenRef.current) return;
-                    try { recognition.start(); } catch (e) { /* already starting */ }
-                }, 300);
-            } else {
-                setIsListening(false);
-                setTranscriptDisplay("Click mic to start");
-            }
+            // If isActiveRef is false the user already set isListening(false) in toggleListening.
         };
 
         recognition.onerror = (event: any) => {
-            hadErrorRef.current = true;
-            if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
-                shouldListenRef.current = false;
+            const err = event.error;
+            if (err === 'not-allowed' || err === 'service-not-allowed') {
+                // Hard stop — mic permission denied
+                isActiveRef.current = false;
                 setIsListening(false);
                 setTranscriptDisplay("Microphone permission denied");
-            } else if (event.error === 'audio-capture') {
-                shouldListenRef.current = false;
+            } else if (err === 'audio-capture') {
+                isActiveRef.current = false;
                 setIsListening(false);
                 setTranscriptDisplay("No microphone found");
-            } else if (event.error === 'no-speech') {
-                // no-speech is normal — not really an error, let onend restart cleanly
-                hadErrorRef.current = false;
             }
-            // network / aborted / other: hadErrorRef stays true → onend will NOT restart
+            // 'no-speech', 'aborted', 'network' — transient; onend will handle restart
         };
 
         recognition.onresult = (event: any) => {
-            hadErrorRef.current = false;
             const result = event.results[event.results.length - 1];
             const text = result[0].transcript.toLowerCase().trim();
-
             setTranscriptDisplay(text);
-
             if (result.isFinal) {
                 processCommand(text);
             }
@@ -93,10 +79,11 @@ export default function VoiceController() {
         recognitionRef.current = recognition;
 
         return () => {
-            shouldListenRef.current = false;
-            if (recognitionRef.current) recognitionRef.current.stop();
+            isActiveRef.current = false;
+            if (restartTimerRef.current) clearTimeout(restartTimerRef.current);
+            try { recognition.abort(); } catch (_) {}
         };
-    }, []); // Only run once on mount — pathname changes must NOT reinitialise recognition
+    }, []); // Only run once on mount
 
     // Command Logic (Expanded for Phase 3)
     const processCommand = (text: string) => {
@@ -149,17 +136,21 @@ export default function VoiceController() {
     const toggleListening = () => {
         if (!recognitionRef.current) return;
 
-        if (isListening) {
-            shouldListenRef.current = false;
-            recognitionRef.current.stop();
+        if (isActiveRef.current) {
+            // --- STOP ---
+            // Update intent ref and UI immediately — don't wait for onend
+            isActiveRef.current = false;
+            if (restartTimerRef.current) clearTimeout(restartTimerRef.current);
+            setIsListening(false);
+            setTranscriptDisplay("Click mic to start");
+            // abort() is more reliable than stop() — always fires onend
+            try { recognitionRef.current.abort(); } catch (_) {}
         } else {
-            shouldListenRef.current = true;
-            hadErrorRef.current = false;
-            try {
-                recognitionRef.current.start();
-            } catch (e) {
-                console.error(e);
-            }
+            // --- START ---
+            isActiveRef.current = true;
+            setIsListening(true);
+            setTranscriptDisplay("Listening...");
+            try { recognitionRef.current.start(); } catch (_) {}
         }
     };
 
