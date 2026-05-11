@@ -15,16 +15,33 @@ export default function VoiceController() {
     const recognitionRef = useRef<any>(null);
     const isActiveRef = useRef(false);
     const restartTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const networkErrorCountRef = useRef(0);
+
+    // Detect browsers that lack Google's bundled speech API keys
+    const getBrowserWarning = (): string => {
+        if (typeof navigator === 'undefined') return '';
+        const ua = navigator.userAgent;
+        if (ua.includes('Vivaldi')) return 'Vivaldi does not support speech recognition — open in Google Chrome';
+        if (ua.includes('Firefox')) return 'Firefox does not support speech recognition — open in Google Chrome';
+        if (ua.includes('OPR') || ua.includes('Opera')) return 'Opera does not support speech recognition — open in Google Chrome';
+        return '';
+    };
 
     useEffect(() => {
         if (typeof window === "undefined") return;
+
+        const browserWarning = getBrowserWarning();
+        if (browserWarning) {
+            setErrorMsg(browserWarning);
+            return;
+        }
 
         const SpeechRecognition =
             (window as any).SpeechRecognition ||
             (window as any).webkitSpeechRecognition;
 
         if (!SpeechRecognition) {
-            setErrorMsg("Speech API not supported — use Chrome or Edge");
+            setErrorMsg("Speech API not supported — use Google Chrome");
             return;
         }
 
@@ -54,7 +71,7 @@ export default function VoiceController() {
                 'not-allowed':            'Mic permission denied — allow mic in browser settings',
                 'service-not-allowed':    'Speech service blocked — try Chrome browser',
                 'audio-capture':          'No microphone found',
-                'network':                'Connecting to speech servers…',
+                'network':                '',
                 'no-speech':              '',
                 'aborted':                '',
                 'bad-grammar':            'Grammar error',
@@ -70,11 +87,23 @@ export default function VoiceController() {
                 setTranscript("");
                 return;
             }
-            // All other errors (network, no-speech, aborted) are transient —
-            // onend will restart automatically, no counter needed
+
+            // Network errors: count them. After 5 with no results, it's likely
+            // a browser API keys issue (Chromium without Google keys) — stop and advise.
+            if (err === 'network') {
+                networkErrorCountRef.current += 1;
+                if (networkErrorCountRef.current >= 5) {
+                    isActiveRef.current = false;
+                    setIsListening(false);
+                    setTranscript("");
+                    setErrorMsg('Requires Google Chrome — open site in Chrome to use voice');
+                }
+            }
+            // no-speech and aborted are truly transient — onend restarts silently
         };
 
         recognition.onresult = (event: any) => {
+            networkErrorCountRef.current = 0;
             setErrorMsg("");
             const result = event.results[event.results.length - 1];
             const text = result[0].transcript.toLowerCase().trim();
@@ -95,6 +124,7 @@ export default function VoiceController() {
 
     const stopListening = () => {
         isActiveRef.current = false;
+        networkErrorCountRef.current = 0;
         if (restartTimerRef.current) clearTimeout(restartTimerRef.current);
         setIsListening(false);
         setTranscript("");
@@ -149,6 +179,7 @@ export default function VoiceController() {
         if (isActiveRef.current) {
             stopListening();
         } else {
+            networkErrorCountRef.current = 0;
             isActiveRef.current = true;
             setIsListening(true);
             setTranscript("Starting…");

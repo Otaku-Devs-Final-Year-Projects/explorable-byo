@@ -5,7 +5,7 @@
 **Live App**: https://explorable-byo.vercel.app  
 **GitHub**: https://github.com/brian-mutsetsa/explorable-byo
 
-> **Browser Note**: Use **Google Chrome** or **Microsoft Edge** for best results. Voice navigation requires a Chromium-based browser. Firefox does not support the Web Speech API.
+> **Browser Note**: Voice navigation requires **Google Chrome** (the branded Google download, not Vivaldi, Brave, or plain Chromium). Vivaldi and other Chromium-based browsers on Linux do not include Google's speech API keys and will show a network error. Firefox also does not support the Web Speech API. All other features work in any browser.
 
 ---
 
@@ -258,7 +258,7 @@ Navigate to https://explorable-byo.vercel.app/admin. The portal loads with 4 tab
 
 ## Scenario 9 — Voice Navigation
 
-> Works on Chrome, Edge, and other Chromium-based browsers. Does **not** work on Firefox.
+> Works on **Google Chrome** only. Vivaldi, Brave, plain Chromium, and Firefox do not include Google's speech API keys and will fail with a network error regardless of internet speed. On Linux, install `google-chrome-stable` (the official Google Chrome package), not `chromium`.
 
 The floating mic button is in the bottom-right corner of every page.
 
