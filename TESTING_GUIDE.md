@@ -262,7 +262,7 @@ Navigate to https://explorable-byo.vercel.app/admin. The portal loads with 4 tab
 
 The floating mic button is in the bottom-right corner of every page.
 
-1. Click the mic button — the dot turns **green**, label says "Voice Active", and a transcript panel appears
+1. Click the mic button — the dot turns **green**, label says "Voice Active", and a transcript panel appears. The system mic indicator (e.g. Vivaldi recording stream in sound settings) should now stay **solid and steady** — no flickering.
 2. Speak these commands and confirm navigation:
 
 | Say this | Goes to |
@@ -281,7 +281,7 @@ The floating mic button is in the bottom-right corner of every page.
 4. Repeat the on/off toggle rapidly several times — the button should respond correctly every time with no stuck-on state.
 5. Navigate to a different page — the mic button is present and functional on every page.
 
-> **Toggle reliability fix**: The button now updates state immediately on click (no waiting for the browser recognition session to end), and uses `abort()` for a clean stop. If Chrome internally restarts the mic session in the background, the button stays green and continues working transparently.
+> **Keepalive fix**: When you turn voice on, the app acquires a persistent mic stream via `getUserMedia` and holds it open for the entire session. This keeps the OS-level recording stream steady. The SpeechRecognition API still internally restarts between silence sessions, but because the hardware stream is already open, PulseAudio/sound settings see no interruption. When you click off, the stream is released and the mic indicator disappears cleanly.
 
 ---
 

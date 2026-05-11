@@ -13,10 +13,13 @@ export default function VoiceController() {
 
     const recognitionRef = useRef<any>(null);
     // Source of truth: does the USER want recognition running?
-    // Using a ref avoids stale-closure bugs — always reflects current intent.
     const isActiveRef = useRef(false);
     // Timer handle for restart-after-natural-end cycles
     const restartTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    // Keepalive stream: holds the mic hardware open continuously so the system
+    // recording indicator (PulseAudio / system sound settings) does NOT flicker
+    // when the SpeechRecognition API internally cycles between sessions.
+    const keepaliveStreamRef = useRef<MediaStream | null>(null);
 
     // Initialize Speech Recognition once on mount
     useEffect(() => {
@@ -34,37 +37,33 @@ export default function VoiceController() {
         recognition.lang = 'en-US';
 
         recognition.onstart = () => {
-            // Sync UI in case start() was called programmatically during a restart cycle
             setIsListening(true);
             setTranscriptDisplay("Listening...");
         };
 
         recognition.onend = () => {
-            // If user still wants recognition on, restart silently.
-            // Do NOT touch isListening here — the UI already reflects the desired state
-            // and any state flip here would cause the icon to flicker.
+            // If the user still wants recognition on, restart silently.
+            // Never touch isListening here — the button state is already correct
+            // and any flip here would cause UI flicker.
             if (isActiveRef.current) {
                 restartTimerRef.current = setTimeout(() => {
                     if (!isActiveRef.current) return;
                     try { recognition.start(); } catch (_) { /* already starting */ }
                 }, 100);
             }
-            // If isActiveRef is false the user already set isListening(false) in toggleListening.
         };
 
         recognition.onerror = (event: any) => {
             const err = event.error;
+            // Only hard-stop on unrecoverable hardware/permission errors
             if (err === 'not-allowed' || err === 'service-not-allowed') {
-                // Hard stop — mic permission denied
-                isActiveRef.current = false;
-                setIsListening(false);
+                stopListening();
                 setTranscriptDisplay("Microphone permission denied");
             } else if (err === 'audio-capture') {
-                isActiveRef.current = false;
-                setIsListening(false);
+                stopListening();
                 setTranscriptDisplay("No microphone found");
             }
-            // 'no-speech', 'aborted', 'network' — transient; onend will handle restart
+            // 'no-speech', 'aborted', 'network' — transient; onend handles restart
         };
 
         recognition.onresult = (event: any) => {
@@ -81,9 +80,27 @@ export default function VoiceController() {
         return () => {
             isActiveRef.current = false;
             if (restartTimerRef.current) clearTimeout(restartTimerRef.current);
+            releaseKeepalive();
             try { recognition.abort(); } catch (_) {}
         };
     }, []); // Only run once on mount
+
+    // Release the keepalive MediaStream and stop the hardware mic
+    const releaseKeepalive = () => {
+        if (keepaliveStreamRef.current) {
+            keepaliveStreamRef.current.getTracks().forEach(t => t.stop());
+            keepaliveStreamRef.current = null;
+        }
+    };
+
+    const stopListening = () => {
+        isActiveRef.current = false;
+        if (restartTimerRef.current) clearTimeout(restartTimerRef.current);
+        releaseKeepalive();
+        setIsListening(false);
+        setTranscriptDisplay("Click mic to start");
+        try { recognitionRef.current?.abort(); } catch (_) {}
+    };
 
     // Command Logic (Expanded for Phase 3)
     const processCommand = (text: string) => {
@@ -133,20 +150,29 @@ export default function VoiceController() {
         setTimeout(() => setCommandTriggered(""), 2500);
     };
 
-    const toggleListening = () => {
+    const toggleListening = async () => {
         if (!recognitionRef.current) return;
 
         if (isActiveRef.current) {
             // --- STOP ---
-            // Update intent ref and UI immediately — don't wait for onend
-            isActiveRef.current = false;
-            if (restartTimerRef.current) clearTimeout(restartTimerRef.current);
-            setIsListening(false);
-            setTranscriptDisplay("Click mic to start");
-            // abort() is more reliable than stop() — always fires onend
-            try { recognitionRef.current.abort(); } catch (_) {}
+            stopListening();
         } else {
             // --- START ---
+            // Acquire a keepalive MediaStream first. This holds the mic hardware
+            // open at the OS/PulseAudio level for the entire session, so the
+            // system recording indicator stays steady even when the SpeechRecognition
+            // API internally restarts its own stream due to silence timeouts.
+            try {
+                keepaliveStreamRef.current = await navigator.mediaDevices.getUserMedia({ audio: true });
+            } catch (err: any) {
+                const name = err?.name || '';
+                if (name === 'NotAllowedError' || name === 'PermissionDeniedError') {
+                    setTranscriptDisplay("Microphone permission denied");
+                } else {
+                    setTranscriptDisplay("No microphone found");
+                }
+                return;
+            }
             isActiveRef.current = true;
             setIsListening(true);
             setTranscriptDisplay("Listening...");
