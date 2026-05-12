@@ -1,115 +1,146 @@
 "use client";
 
-import 'regenerator-runtime/runtime';
-import { useState, useEffect } from 'react';
-import SpeechRecognition, { useSpeechRecognition } from 'react-speech-recognition';
+import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { Mic, MicOff, Activity, AlertCircle } from 'lucide-react';
+import { Mic, MicOff, Activity } from 'lucide-react';
 
+// Works in: Google Chrome, Microsoft Edge, Brave (shields down)
+// Network errors on: Vivaldi/Chromium Linux (no Google API keys bundled)
 export default function VoiceController() {
     const router = useRouter();
-    const [commandTriggered, setCommandTriggered] = useState("");
-    const [isClient, setIsClient] = useState(false);
-    // Set on mount — UA-based detection runs only client-side
-    const [unsupportedMsg, setUnsupportedMsg] = useState("");
+
+    const [isListening, setIsListening] = useState(false);
+    const [label, setLabel] = useState("Click mic to start");
+    const [commandFired, setCommandFired] = useState("");
+
+    const recRef = useRef<any>(null);
+    const wantsOnRef = useRef(false);
+    const restartRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     useEffect(() => {
-        setIsClient(true);
-        const ua = navigator.userAgent;
-        // Vivaldi and plain Chromium on Linux ship without Google's speech API keys.
-        // They expose the API but it fails with "network" on every call.
-        if (ua.includes('Vivaldi')) {
-            setUnsupportedMsg('Voice requires Google Chrome — not supported in Vivaldi');
-        } else if (ua.includes('Firefox') && !ua.includes('Chrome')) {
-            setUnsupportedMsg('Voice requires Google Chrome — not supported in Firefox');
+        if (typeof window === 'undefined') return;
+        const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+        if (!SR) {
+            setLabel("Not supported — use Chrome or Edge");
+            return;
         }
+
+        const r = new SR();
+        r.continuous = true;
+        r.interimResults = true;
+        r.lang = 'en-US';
+
+        r.onstart = () => {
+            setIsListening(true);
+            setLabel("Listening…");
+        };
+
+        r.onend = () => {
+            // Auto-restart if user still wants it on (handles Chrome's silent timeouts)
+            if (wantsOnRef.current) {
+                restartRef.current = setTimeout(() => {
+                    if (wantsOnRef.current) try { r.start(); } catch (_) {}
+                }, 200);
+            }
+        };
+
+        r.onerror = (e: any) => {
+            const friendly: Record<string, string> = {
+                'not-allowed':         'Mic permission denied — check browser settings',
+                'audio-capture':       'No microphone found',
+                'service-not-allowed': 'Speech service blocked — try Google Chrome',
+                'network':             'Network error — try Google Chrome or lower Brave Shields',
+            };
+            setLabel(friendly[e.error] || `Error: ${e.error}`);
+            // Only hard-stop on unrecoverable errors
+            if (['not-allowed', 'audio-capture', 'service-not-allowed'].includes(e.error)) {
+                wantsOnRef.current = false;
+                setIsListening(false);
+            }
+            // network errors: leave wantsOnRef true — onend will keep retrying
+        };
+
+        r.onresult = (e: any) => {
+            const res = e.results[e.results.length - 1];
+            const txt = res[0].transcript.toLowerCase().trim();
+            setLabel(txt); // Show live transcript so user can see what was heard
+            if (res.isFinal) handleCommand(txt);
+        };
+
+        recRef.current = r;
+        return () => {
+            wantsOnRef.current = false;
+            if (restartRef.current) clearTimeout(restartRef.current);
+            try { r.abort(); } catch (_) {}
+        };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-    const triggerVisual = (msg: string) => {
-        setCommandTriggered(msg);
-        setTimeout(() => setCommandTriggered(""), 2500);
+    const handleCommand = (txt: string) => {
+        const fire = (msg: string, fn: () => void) => {
+            setCommandFired(msg);
+            setTimeout(() => setCommandFired(""), 2500);
+            fn();
+        };
+        if (txt.includes('scroll down') || txt.includes('go down'))           return fire('Scrolling Down',      () => window.scrollBy({ top: 600, behavior: 'smooth' }));
+        if (txt.includes('scroll up')   || txt.includes('go up'))             return fire('Scrolling Up',        () => window.scrollBy({ top: -600, behavior: 'smooth' }));
+        if (txt.includes('go home')     || txt.includes('home page') || txt.includes('go to home')) return fire('Going Home',  () => router.push('/'));
+        if (txt.includes('explore')     || txt.includes('venues'))            return fire('Opening Explore',     () => router.push('/explore'));
+        if (txt.includes('community')   || txt.includes('forum'))             return fire('Opening Community',   () => router.push('/community'));
+        if (txt.includes('training')    || txt.includes('academy'))           return fire('Opening Training',    () => router.push('/training'));
+        if (txt.includes('innovation')  || txt.includes('tools'))             return fire('Opening Innovation',  () => router.push('/innovation'));
+        if (txt.includes('news')        || txt.includes('updates'))           return fire('Opening News',        () => router.push('/news'));
+        if (txt.includes('contact'))                                           return fire('Opening Contact',     () => router.push('/contact'));
+        if (txt.includes('login')       || txt.includes('sign in'))           return fire('Opening Login',       () => router.push('/login'));
+        if (txt.includes('dashboard'))                                         return fire('Opening Dashboard',   () => router.push('/dashboard'));
     };
-
-    const nav = (path: string, label: string) => {
-        triggerVisual(label);
-        router.push(path);
-    };
-
-    // react-speech-recognition command list — isFuzzyMatch means partial phrase matching
-    const commands = [
-        { command: ['scroll down', 'go down', 'move down'], callback: () => { triggerVisual('Scrolling Down'); window.scrollBy({ top: 600, behavior: 'smooth' }); }, isFuzzyMatch: true },
-        { command: ['scroll up', 'go up', 'move up'],       callback: () => { triggerVisual('Scrolling Up');   window.scrollBy({ top: -600, behavior: 'smooth' }); }, isFuzzyMatch: true },
-        { command: ['go home', 'home page', 'go to home', 'home'],    callback: () => nav('/', 'Opening Home'),         isFuzzyMatch: true },
-        { command: ['explore', 'explore venues', 'venues'],            callback: () => nav('/explore', 'Opening Explore'), isFuzzyMatch: true },
-        { command: ['training', 'training academy', 'academy'],        callback: () => nav('/training', 'Opening Training'), isFuzzyMatch: true },
-        { command: ['innovation', 'innovation hub', 'tools'],          callback: () => nav('/innovation', 'Opening Innovation'), isFuzzyMatch: true },
-        { command: ['community', 'community forum', 'forum'],          callback: () => nav('/community', 'Opening Community'), isFuzzyMatch: true },
-        { command: ['news', 'latest news', 'updates'],                 callback: () => nav('/news', 'Opening News'),     isFuzzyMatch: true },
-        { command: ['contact', 'contact us'],                          callback: () => nav('/contact', 'Opening Contact'), isFuzzyMatch: true },
-        { command: ['login', 'sign in', 'log in'],                     callback: () => nav('/login', 'Opening Login'),   isFuzzyMatch: true },
-        { command: ['dashboard', 'my dashboard'],                      callback: () => nav('/dashboard', 'Opening Dashboard'), isFuzzyMatch: true },
-    ];
-
-    const { transcript, listening, browserSupportsSpeechRecognition } = useSpeechRecognition({ commands });
-
-    // Don't render anything server-side (Speech API is browser-only)
-    if (!isClient) return null;
-
-    const errorMsg = unsupportedMsg || (!browserSupportsSpeechRecognition ? 'Voice requires Google Chrome' : '');
-    const isDisabled = !!errorMsg;
 
     const toggle = () => {
-        if (isDisabled) return;
-        if (listening) {
-            SpeechRecognition.stopListening();
+        if (!recRef.current) return;
+        if (wantsOnRef.current) {
+            wantsOnRef.current = false;
+            if (restartRef.current) clearTimeout(restartRef.current);
+            setIsListening(false);
+            setLabel("Click mic to start");
+            try { recRef.current.abort(); } catch (_) {}
         } else {
-            SpeechRecognition.startListening({ continuous: true, language: 'en-US' });
+            wantsOnRef.current = true;
+            setIsListening(true);
+            setLabel("Starting…");
+            try { recRef.current.start(); } catch (_) {}
         }
     };
 
     return (
         <>
             {/* COMMAND FLASH OVERLAY */}
-            <div className={`fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-[100] pointer-events-none transition-all duration-300 ${commandTriggered ? 'opacity-100 scale-100' : 'opacity-0 scale-90'}`}>
+            <div className={`fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-[100] pointer-events-none transition-all duration-300 ${commandFired ? 'opacity-100 scale-100' : 'opacity-0 scale-90'}`}>
                 <div className="bg-hotel-bronze text-white px-10 py-6 rounded-sm shadow-2xl border border-white/20 flex flex-col items-center gap-3">
                     <Activity size={32} className="animate-pulse" />
-                    <div className="text-xl font-serif font-bold uppercase tracking-widest text-center">{commandTriggered}</div>
+                    <div className="text-xl font-serif font-bold uppercase tracking-widest text-center">{commandFired}</div>
                 </div>
             </div>
 
             {/* MIC BUTTON */}
             <button
                 onClick={toggle}
-                disabled={isDisabled}
-                className={`fixed bottom-6 right-6 z-[90] transition-all duration-300 border border-white/10 text-white px-5 py-3 rounded-full flex items-center gap-4 shadow-2xl
-                    ${isDisabled ? 'bg-stone-900 cursor-not-allowed opacity-80' : listening ? 'bg-hotel-black hover:scale-105 cursor-pointer' : 'bg-stone-800 hover:scale-105 cursor-pointer'}`}
+                className={`fixed bottom-6 right-6 z-[90] transition-all duration-300 hover:scale-105 border border-white/10 text-white px-5 py-3 rounded-full flex items-center gap-4 shadow-2xl cursor-pointer ${isListening ? 'bg-hotel-black' : 'bg-stone-800'}`}
                 aria-label="Voice Commands"
             >
-                {/* Status dot */}
-                <div className={`w-3 h-3 rounded-full flex-shrink-0
-                    ${isDisabled ? 'bg-gray-600' : listening ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`}
-                />
+                <div className={`w-3 h-3 rounded-full flex-shrink-0 ${isListening ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`} />
 
-                {/* Text panel — desktop only */}
                 <div className="hidden sm:flex flex-col items-start w-44">
                     <span className="text-[9px] uppercase tracking-widest text-gray-400 font-bold mb-1">
-                        {isDisabled ? 'Not Available' : listening ? 'Voice Active' : 'Voice Off'}
+                        {isListening ? 'Voice Active' : 'Voice Off'}
                     </span>
-                    {errorMsg ? (
-                        <span className="text-[10px] text-yellow-400 leading-tight">{errorMsg}</span>
-                    ) : (
-                        <span className={`text-xs font-serif truncate w-full ${listening ? 'text-hotel-bronze' : 'text-gray-400'}`}>
-                            {listening ? (transcript || 'Listening…') : 'Click mic to start'}
-                        </span>
-                    )}
+                    <span className={`text-xs font-serif truncate w-full ${isListening ? 'text-hotel-bronze' : 'text-gray-400'}`}>
+                        {label}
+                    </span>
                 </div>
 
-                {/* Icon */}
-                {isDisabled
-                    ? <AlertCircle size={18} className="text-yellow-400 hidden sm:block" />
-                    : listening
-                        ? <Activity size={18} className="text-hotel-bronze hidden sm:block" />
-                        : <MicOff size={18} className="text-gray-500 hidden sm:block" />
+                {isListening
+                    ? <Activity size={18} className="text-hotel-bronze hidden sm:block" />
+                    : <MicOff size={18} className="text-gray-500 hidden sm:block" />
                 }
                 <Mic size={20} className="sm:hidden text-white" />
             </button>
