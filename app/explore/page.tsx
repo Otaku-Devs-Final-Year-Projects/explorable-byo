@@ -63,7 +63,7 @@ export default function ExplorePage() {
  lng: v.longitude, // Captured from DB
  rating: v.rating,
  reviews:"Verified",
- image: (v.image_url && !v.image_url.startsWith('data:') && !v.image_url.includes('bing.net')) ? v.image_url : null,
+ image: (v.image_url && !v.image_url.startsWith('data:')) ? v.image_url : null,
  price:"Enquire",
  tags: tags
  };
