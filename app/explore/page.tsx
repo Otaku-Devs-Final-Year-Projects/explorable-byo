@@ -49,6 +49,7 @@ export default function ExplorePage() {
  const formattedVenues = data.map((v: any) => {
  const f = Array.isArray(v.venue_features) ? v.venue_features[0] : (v.venue_features || {});
  const tags = [];
+ if (v.type) tags.push(v.type);
  if (f.wheelchair_accessible) tags.push("Wheelchair");
  if (f.quiet_space) tags.push("Sensory");
  if (f.accessible_bathroom) tags.push("Accessible Bathroom");
@@ -56,6 +57,7 @@ export default function ExplorePage() {
  return {
  id: v.id,
  name: v.name,
+ type: v.type,
  location: v.address,
  lat: v.latitude, // Captured from DB
  lng: v.longitude, // Captured from DB
@@ -76,8 +78,8 @@ export default function ExplorePage() {
  };
 
  const filteredVenues = venues.filter(v => {
-   const matchesFilter = activeFilter === "All" || v.tags.some((t: string) => t.includes(activeFilter));
-   const matchesSearch = v.name.toLowerCase().includes(searchQuery.toLowerCase()) || v.location.toLowerCase().includes(searchQuery.toLowerCase());
+   const matchesFilter = activeFilter === "All" || v.tags.some((t: string) => t.toLowerCase().includes(activeFilter.toLowerCase())) || (v.type && v.type.toLowerCase().includes(activeFilter.toLowerCase()));
+   const matchesSearch = v.name.toLowerCase().includes(searchQuery.toLowerCase()) || v.location.toLowerCase().includes(searchQuery.toLowerCase()) || (v.type && v.type.toLowerCase().includes(searchQuery.toLowerCase()));
    return matchesFilter && matchesSearch;
  });
 
@@ -134,6 +136,11 @@ export default function ExplorePage() {
  <div className="max-w-7xl mx-auto px-6 py-4 flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
    <div className="flex gap-4 overflow-x-auto no-scrollbar w-full md:w-auto">
      <FilterBtn label="All Venues" active={activeFilter ==="All"} onClick={() => setActiveFilter("All")} />
+     <div className="w-[1px] h-6 bg-gray-200 mx-2 self-center hidden sm:block"></div>
+     <FilterBtn label="Hotels" active={activeFilter ==="Hotel"} onClick={() => setActiveFilter("Hotel")} />
+     <FilterBtn label="Lodges" active={activeFilter ==="Lodge"} onClick={() => setActiveFilter("Lodge")} />
+     <FilterBtn label="Food" active={activeFilter ==="Restaurant"} onClick={() => setActiveFilter("Restaurant")} />
+     <FilterBtn label="Nature" active={activeFilter ==="Nature"} onClick={() => setActiveFilter("Nature")} />
      <div className="w-[1px] h-6 bg-gray-200 mx-2 self-center hidden sm:block"></div>
      <FilterBtn icon={<UserCheck size={14} />} label="Wheelchair" active={activeFilter ==="Wheelchair"} onClick={() => setActiveFilter("Wheelchair")} />
      <FilterBtn icon={<VolumeX size={14} />} label="Sensory" active={activeFilter ==="Sensory"} onClick={() => setActiveFilter("Sensory")} />
