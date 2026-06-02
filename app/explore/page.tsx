@@ -78,8 +78,24 @@ export default function ExplorePage() {
  };
 
  const filteredVenues = venues.filter(v => {
-   const matchesFilter = activeFilter === "All" || v.tags.some((t: string) => t.toLowerCase().includes(activeFilter.toLowerCase())) || (v.type && v.type.toLowerCase().includes(activeFilter.toLowerCase()));
-   const matchesSearch = v.name.toLowerCase().includes(searchQuery.toLowerCase()) || v.location.toLowerCase().includes(searchQuery.toLowerCase()) || (v.type && v.type.toLowerCase().includes(searchQuery.toLowerCase()));
+   const vType = v.type ? v.type.toLowerCase() : "";
+   
+   let matchesFilter = false;
+   if (activeFilter === "All") {
+     matchesFilter = true;
+   } else if (activeFilter === "Hotel") {
+     matchesFilter = vType.includes("hotel");
+   } else if (activeFilter === "Lodge") {
+     matchesFilter = vType.includes("lodge") || vType.includes("guest house") || vType.includes("villa");
+   } else if (activeFilter === "Restaurant") {
+     matchesFilter = vType.includes("restaurant") || vType.includes("cafe");
+   } else if (activeFilter === "Attraction") {
+     matchesFilter = vType.includes("nature") || vType.includes("park") || vType.includes("museum");
+   } else {
+     matchesFilter = v.tags.some((t: string) => t.toLowerCase().includes(activeFilter.toLowerCase()));
+   }
+
+   const matchesSearch = v.name.toLowerCase().includes(searchQuery.toLowerCase()) || v.location.toLowerCase().includes(searchQuery.toLowerCase()) || vType.includes(searchQuery.toLowerCase());
    return matchesFilter && matchesSearch;
  });
 
@@ -138,9 +154,9 @@ export default function ExplorePage() {
      <FilterBtn label="All Venues" active={activeFilter ==="All"} onClick={() => setActiveFilter("All")} />
      <div className="w-[1px] h-6 bg-gray-200 mx-2 self-center hidden sm:block"></div>
      <FilterBtn label="Hotels" active={activeFilter ==="Hotel"} onClick={() => setActiveFilter("Hotel")} />
-     <FilterBtn label="Lodges" active={activeFilter ==="Lodge"} onClick={() => setActiveFilter("Lodge")} />
-     <FilterBtn label="Food" active={activeFilter ==="Restaurant"} onClick={() => setActiveFilter("Restaurant")} />
-     <FilterBtn label="Nature" active={activeFilter ==="Nature"} onClick={() => setActiveFilter("Nature")} />
+     <FilterBtn label="Lodges & Villas" active={activeFilter ==="Lodge"} onClick={() => setActiveFilter("Lodge")} />
+     <FilterBtn label="Food & Drink" active={activeFilter ==="Restaurant"} onClick={() => setActiveFilter("Restaurant")} />
+     <FilterBtn label="Attractions" active={activeFilter ==="Attraction"} onClick={() => setActiveFilter("Attraction")} />
      <div className="w-[1px] h-6 bg-gray-200 mx-2 self-center hidden sm:block"></div>
      <FilterBtn icon={<UserCheck size={14} />} label="Wheelchair" active={activeFilter ==="Wheelchair"} onClick={() => setActiveFilter("Wheelchair")} />
      <FilterBtn icon={<VolumeX size={14} />} label="Sensory" active={activeFilter ==="Sensory"} onClick={() => setActiveFilter("Sensory")} />
